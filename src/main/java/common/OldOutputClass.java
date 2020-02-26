@@ -1,17 +1,20 @@
-/*
+
 package comms;
 
 import comms.datagram.client.*;
 import java.io.InputStream;
 
-public class ProtocolInput{
+public class CommunicationInterface{
+    
+    private Socket s;
     private InputStream is;
+    private OutputStream os;    
     
     private byte[] buf;
     private final int bufSize = 4;
     
     
-    public ClientInput(InputStream is){
+    public CommunicationInterface(Socket s){
         this.is = is;
         buf = new byte[4];
     } 
