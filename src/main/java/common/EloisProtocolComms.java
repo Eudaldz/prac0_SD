@@ -1,19 +1,23 @@
-/*
 package comms;
 
 import comms.datagram.client.*;
 import java.io.OutputStream;
 
-public class ClientOutput{
+public class EloisProtocolComms{
+    private Socket s;
+    private InputStream is;
     private OutputStream os;
-    byte asciiSpace = 32; 
     
-    public ClientOutput(OutputStream os){
-        this.os = os;
+    byte asciiSpace = 32;
+    
+    
+    public EloisProtocolComms(Socket s){
+        is = s.getInputStream();
+        os = s.getOutputStream();
     }
-
-    public void writeClientDatagram(ClientDatagram d){
-        ClientCommand command = d.command;
+    
+    public void sendClientAction(ClientAction ca){
+        ClientCommand command = ca.command;
         String word = command.key;
         writeWord(word);
         switch(command){
@@ -36,29 +40,36 @@ public class ClientOutput{
             
             case Exit:
                 return;
-            
-            default:
         }
     }
     
-    public void writeServerDatagram(ServerDatagram d){
-        ClientCommand command = d.command;
+    public void sendServerAction(ServerAction sa){
+        ClientCommand command = sa.command;
         String word = command.key;
         writeWord(word);
         switch(command){
             case Cash:
+                ServerCash a = (ServerCash)sa;
                 putInt(d.cash);
                 return;
                 
             case Loot:
-                putInt(d.coins);
+                ServerLoot a = (ServerLoot)sa;
+                putInt(a.coins);
                 return;
                 
             case Play:
-                putByte(d.value);
+                ServerPlay a = (ServerPlay)sa;
+                if(a.value == ServerPlay.CLIENT){
+                    putByte((byte)'0');
+                }else{
+                    putByte((byte)'1');
+                }
                 return;
                 
             case Dice:
+                ServerDice a = (ServerDice)sa;
+                putInt(a.id);
                 int id = nextInt();
                 byte[] diceList = nextByteList();
                 return new ServerDice(id, diceList);
@@ -80,8 +91,11 @@ public class ClientOutput{
             case Wins:
                 byte v = nextByte();
                 return new ServerWins(v); 
-        }
     }
+    
+    
+    
+
     
     
     
@@ -125,4 +139,4 @@ public class ClientOutput{
         bytes[3] = (byte)(number & 0xFF);
         return bytes;
     }
-}*/
+}
