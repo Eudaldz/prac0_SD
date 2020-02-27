@@ -1,4 +1,3 @@
-/*
 package server;
 
 import java.net.ServerSocket;
@@ -37,4 +36,4 @@ class Server{
         Thread nt = new Thread(new ServerEngine());
         nt.start();
     }
-}*/
+}
