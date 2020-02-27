@@ -1,4 +1,4 @@
-package common.server_action;
+package common.server_actions;
 
 import common.DiceValue;
 

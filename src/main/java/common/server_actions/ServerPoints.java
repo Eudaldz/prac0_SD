@@ -1,4 +1,4 @@
-package common.server_action;
+package common.server_actions;
 
 public class ServerPoints extends ServerAction{
     public final int id;
