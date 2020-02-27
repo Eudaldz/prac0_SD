@@ -1,4 +1,6 @@
-package common.server_action;
+package common.server_actions;
+
+import common.server_actions.ServerAction;
 
 public class ServerWins extends ServerAction{
     public final byte value;

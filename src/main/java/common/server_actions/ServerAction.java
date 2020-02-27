@@ -1,4 +1,6 @@
-package common.server_action;
+package common.server_actions;
+
+import common.server_actions.ServerCommand;
 
 public abstract class ServerAction{
     public final ServerCommand command;

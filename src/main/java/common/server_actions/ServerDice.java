@@ -1,5 +1,6 @@
-package common.server_action;
+package common.server_actions;
 
+import common.server_actions.ServerAction;
 import common.DiceValue;
 
 public class ServerDice extends ServerAction{

@@ -1,14 +1,17 @@
 package common;
 
+import java.util.Map;
+import java.util.HashMap;
+
 public enum DiceValue{
     One(1), Two(2), Three(3), Four(4), Five(5), Six(6);
     
     public final int number;
     
-    private static final Map<Int, ClientCommand> lookup = new HashMap<String, ClientCommand>();
+    private static final Map<Integer, DiceValue> lookup = new HashMap<Integer, DiceValue>();
     
     static{
-        for(ClientCommand c: ClientCommand.values()){
+        for(DiceValue c: DiceValue.values()){
             lookup.put(c.number, c);
         }
     }

@@ -1,3 +1,5 @@
+package server;
+
 //Codificacio dels possibles estats del joc.
 // CSTART, 
 public enum GameState{

@@ -1,13 +1,12 @@
 package common;
 
-import common.*;
 import common.client_actions.*;
 import common.server_actions.*;
 
-
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.InputStream;
-import java.net.Socket;
+import java.nio.charset.Charset;
 
 
 public class EloisProtocolComms implements CommunicationInterface{
@@ -15,66 +14,68 @@ public class EloisProtocolComms implements CommunicationInterface{
     private OutputStream os;
     
     private static final byte ASCII_SPACE = 32;
-    private static final String ERROR_COMMAND = "ERRO"
+    private static final String ERROR_COMMAND = "ERRO";
     
     private static final int MAX_LIST_LEN = 5;
     
     
     public EloisProtocolComms(InputStream is, OutputStream os){
-        is = s.getInputStream();
-        os = s.getOutputStream();
+        this.is = is;
+        this.os = os;
     }
     
-    public void close(){
+    public void close()throws IOException{
         is.close();
         os.close();
     }
     
     public void sendClientAction(ClientAction ca)throws IOException{
         ClientCommand command = ca.command;
-        String word = command.key;
+        String word = command.toString();
         writeWord(word);
         switch(command){
-            case Start:
+            case Start:{
                 ClientStart a = (ClientStart)ca;
                 putInt(a.id);
                 return;
-            
-            case Bett:
+            }
+            case Bett:{
                 return;
-                
-            case Take:
+            }
+            case Take:{
                 ClientTake a = (ClientTake)ca;
                 putInt(a.id);
                 putByteList(a.diceIndexList);
                 return;
-                
-            case Pass:
-                ClientPass a = (ClientPass)ca;
-                putInt(a.id);
-                return new ClientPass(id);
-            
-            case Exit:
+            } 
+            case Pass:{
+                putInt(((ClientPass)ca).id);
                 return;
+            }
+            case Exit:{
+                return;
+            }
         }
     }
     
     public void sendServerAction(ServerAction sa)throws IOException{
-        ClientCommand command = sa.command;
-        String word = command.key;
+        ServerCommand command = sa.command;
+        String word = command.toString();
         writeWord(word);
         switch(command){
-            case Cash:
+            case Cash:{
                 ServerCash a = (ServerCash)sa;
-                putInt(d.cash);
+                putInt(a.cash);
                 return;
+            }
                 
-            case Loot:
+            case Loot:{
                 ServerLoot a = (ServerLoot)sa;
                 putInt(a.coins);
                 return;
+            }
                 
-            case Play:
+            case Play:{
                 ServerPlay a = (ServerPlay)sa;
                 if(a.value == ServerPlay.CLIENT){
                     putByte((byte)'0');
@@ -82,30 +83,35 @@ public class EloisProtocolComms implements CommunicationInterface{
                     putByte((byte)'1');
                 }
                 return;
+            }
                 
-            case Dice:
+            case Dice:{
                 ServerDice a = (ServerDice)sa;
                 putInt(a.id);
                 putDiceList(a.diceList);
                 return;
+            }
                 
-            case Take:
-                ServerDice a = (ServerDice)sa;
+            case Take:{
+                ServerTake a = (ServerTake)sa;
                 putInt(a.id);
                 putByteList(a.diceIndexList);
                 return;
+            }
             
-            case Pass:
+            case Pass:{
                 ServerPass a = (ServerPass)sa;
                 putInt(a.id);
                 return;
+            }
                 
-            case Points: 
+            case Points:{
                 ServerPoints a = (ServerPoints)sa;
                 putInt(a.id);
                 putInt(a.points);
                 return;
-            case Wins:
+            }
+            case Wins:{
                 ServerWins a = (ServerWins)sa;
                 if(a.value == ServerWins.CLIENT){
                     putByte((byte)'0');
@@ -114,7 +120,9 @@ public class EloisProtocolComms implements CommunicationInterface{
                 }else{
                     putByte((byte)'2');
                 }
-                return; 
+                return;
+            }
+        }
     }
     
     public void sendErrorMessage(ProtocolErrorMessage pem) throws IOException{
@@ -137,27 +145,29 @@ public class EloisProtocolComms implements CommunicationInterface{
         }
         
         switch(command){
-            case Start:
+            case Start:{
                 int id = nextInt();
                 return new ClientStart(id);
-            
-            case Bett:
+            }
+            case Bett:{
                 return new ClientBett();
-                
-            case Take:
+            }   
+            case Take:{
                 int id = nextInt();
                 byte[] diceIndex = nextByteList(5);
                 return new ClientTake(id, diceIndex);
-                
-            case Pass:
+            }   
+            case Pass:{
                 int id = nextInt();
                 return new ClientPass(id);
-            
-            case Exit:
+            } 
+            case Exit:{
                 return new ClientExit();
-            
-            default:
+            }
         }
+        
+        //note: unreachable return
+        return null;
     }
     
     
@@ -174,45 +184,47 @@ public class EloisProtocolComms implements CommunicationInterface{
         }
         
         switch(command){
-            case Cash:
+            case Cash:{
                 int cash = nextInt();
                 return new ServerCash(cash);
-            case Loot:
+            }
+            case Loot:{
                 int coins = nextInt();
                 return new ServerLoot(coins);
-                
-            case Play:
-                byte c = nextByte();
+            }
+            case Play:{
+                int c = nextByte();
                 byte v = 0;
-                if(c == '0'){
+                if(c == (int)'0'){
                     v = ServerPlay.CLIENT;
-                }else if(c == '1'){
+                }else if(c == (int)'1'){
                     v = ServerPlay.SERVER;
                 }else{
                     throw new ProtocolException("Invalid paramater value");
                 }
                 return new ServerPlay(v);
-                
-            case Dice:
+            }  
+            case Dice:{
                 int id = nextInt();
                 DiceValue[] diceList = nextDiceList(5);
                 return new ServerDice(id, diceList);
-                
-            case Take: 
+            } 
+            case Take:{ 
                 int id = nextInt();
                 byte[] diceIndex = nextByteList(5);
                 return new ServerTake(id, diceIndex);
-            
-            case Pass:
+            }
+            case Pass:{
                 int id = nextInt();
                 return new ServerPass(id);
-                
-            case Points: 
+            }   
+            case Points:{ 
                 int id = nextInt();
                 int points = nextInt();
                 return new ServerPoints(id, points);
-            case Wins:
-                byte c = nextByte();
+            }
+            case Wins:{
+                int c = nextByte();
                 byte v = 0;
                 if(c == '0'){
                     v = ServerWins.CLIENT;
@@ -224,11 +236,13 @@ public class EloisProtocolComms implements CommunicationInterface{
                     throw new ProtocolException("Invalid paramater value");
                 }
                 return new ServerWins(v); 
+            }
         }
+        return null;
     }
     
     private void nextSpace() throws IOException, ProtocolException{
-        byte sp = is.read();
+        int sp = is.read();
         if(sp != ASCII_SPACE)throw new ProtocolException("Expected separator character");
     }
     
@@ -236,8 +250,8 @@ public class EloisProtocolComms implements CommunicationInterface{
         os.write(ASCII_SPACE);
     }
     
-    private byte nextByte() throws IOException{
-        skipByte();
+    private int nextByte() throws IOException, ProtocolException{
+        nextSpace();
         return is.read();
     }
     
@@ -246,8 +260,8 @@ public class EloisProtocolComms implements CommunicationInterface{
         os.write(b);
     }
     
-    private int nextInt() throws IOException{
-        skipByte();
+    private int nextInt() throws IOException, ProtocolException{
+        nextSpace();
         byte[] buf = new byte[4];
         is.read(buf, 0, 4);
         return bytesToInt(buf);
@@ -259,34 +273,32 @@ public class EloisProtocolComms implements CommunicationInterface{
     }
     
     private byte[] nextByteList(int max_len) throws IOException, ProtocolException{
-        byte b = nextByte();
-        int len = b & 0xFF;
+        int len = nextByte();
         if(len > max_len){
             throw new ProtocolException("List length exceeds maximum allowed");
         }
         byte[] l = new byte[len];
         for(int i = 0; i < len; i++){
-            l[i] = nextByte();
+            l[i] = (byte)(nextByte() & 0xFF);
         }
         return l;
     }
     
     private void putByteList(byte[] l) throws IOException{
         putByte((byte)l.length);
-        for(int i = 0; i < l.length; l++){
+        for(int i = 0; i < l.length; i++){
             putByte(l[i]);
         }
     }
     
     private DiceValue[] nextDiceList(int max_len) throws IOException, ProtocolException{
-        byte b = nextByte();
-        int len = b & 0xFF;
+        int len = nextByte();
         if(len > max_len){
             throw new ProtocolException("List length exceeds maximum allowed");
         }
         DiceValue[] diceList = new DiceValue[len];
         for(int i = 0; i < len; i++){
-            byte v = nextByte() - (byte)'0';
+            int v = nextByte() - (int)'0';
             diceList[i] = DiceValue.fromInt(v);
             
         }
@@ -295,9 +307,9 @@ public class EloisProtocolComms implements CommunicationInterface{
     
     private void putDiceList(DiceValue[] l) throws IOException{
         putByte((byte)l.length);
-        for(int i = 0; i < l.length; l++){
-            byte = (byte)'0' + l[i].number;
-            putByte(l[i]);
+        for(int i = 0; i < l.length; i++){
+            byte db = (byte)((int)'0' + l[i].number);
+            putByte(db);
         }
     }
     
@@ -308,12 +320,12 @@ public class EloisProtocolComms implements CommunicationInterface{
     }
     
     private void writeWord(String w) throws IOException{
-        byte[] b = string.getBytes(Charset.forName("UTF-8"));
+        byte[] b = w.getBytes(Charset.forName("UTF-8"));
         os.write(b, 0, 4);
     }
     
     private String nextMessage() throws IOException, ProtocolException{
-        skipByte();
+        nextSpace();
         byte[] buf = new byte[2];
         is.read(buf, 0, 2);
         int len = 0;
@@ -347,10 +359,10 @@ public class EloisProtocolComms implements CommunicationInterface{
     
     private static byte[] intToBytes(int c){
         byte[] bytes = new byte[4];
-        bytes[0] = (byte)((number >> 24) & 0xFF);
-        bytes[1] = (byte)((number >> 16) & 0xFF);
-        bytes[2] = (byte)((number >> 8) & 0xFF);
-        bytes[3] = (byte)(number & 0xFF);
+        bytes[0] = (byte)((c >> 24) & 0xFF);
+        bytes[1] = (byte)((c >> 16) & 0xFF);
+        bytes[2] = (byte)((c >> 8) & 0xFF);
+        bytes[3] = (byte)(c & 0xFF);
         return bytes;
     }
 }
