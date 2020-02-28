@@ -44,7 +44,7 @@ public class TestProtocol {
         ' ', 0x1, ' ', 0x2, ' ', 0x3, ' ', 0x4, ' ', 0x5};
     public static final ClientTake clientTakeO1 = new ClientTake(0x80810000, new byte[]{1, 2, 3, 4, 5});
     public static final byte[] clientTakeD2 = new byte[]{'T', 'A', 'K', 'E', ' ', 0, 0, (byte)0x80, (byte)0x81, ' ', 0};
-    public static final ClientTake clientTakeO2 = new ClientTake(0x80810000, new byte[]{});
+    public static final ClientTake clientTakeO2 = new ClientTake(0x00008081, new byte[]{});
     public static final byte[] clientTakeDE1 = new byte[]{'T', 'A', 'K', 'E', ' ', 0x1, 0x1, 0x1, 0x1, ' ', 32, 0};
     public static final byte[] clientTakeDE2 = new byte[]{'T', 'A', 'K', 'E', ' ', 0x1, 0x1, 0x1, 0x1, 'X', 32, 0};
     
@@ -96,7 +96,7 @@ public class TestProtocol {
     public static final ServerPass serverPassO1 = new ServerPass(0x10203040);
     
     public static final byte[] serverPointsD1 = new byte[]{'P', 'N', 'T', 'S', ' ', 0x1, 0x2, 0x3, 0x4, ' ', (byte)0xFF};
-    public static final ServerPoints serverPointsO1 = new ServerPoints(0x01020304, (byte)0xFF);
+    public static final ServerPoints serverPointsO1 = new ServerPoints(0x01020304, 0xFF);
     public static final byte[] serverPointsDE1 = new byte[]{'P', 'N', 'T', 'S', ' ', 0x1, 0x2, 0x3, 0x4, 'X', (byte)0xFF};
     
     public static final byte[] serverWinsD1 = new byte[]{'W', 'I', 'N', 'S', ' ', '0'};
@@ -106,6 +106,15 @@ public class TestProtocol {
     public static final byte[] serverWinsD3 = new byte[]{'W', 'I', 'N', 'S', ' ', '2'};
     public static final ServerWins serverWinsO3 = new ServerWins(ServerWins.TIE);
     public static final byte[] serverWinsDE1 = new byte[]{'W', 'I', 'N', 'S', ' ', 'X'};
+    
+    /*
+    *    GENERAL
+    */
+    
+    public static final byte[] nonsense = new byte[]{'X', 'D', 'F', 'U', 'C', 'K', 'Y', 'O', 'U'};
+    
+    public static final byte[] errorMsgD = new byte[]{'E', 'R', 'R', 'O', ' ', '0', '5', 'H', 'E', 'L', 'L', 'O'};
+    public static final ProtocolErrorMessage errorMsgO = new ProtocolErrorMessage("HELLO");
     
     
     
@@ -164,6 +173,7 @@ public class TestProtocol {
         assertArrayEquals(clientTakeD1, os.toByteArray());
         os.reset();
         comms.sendClientAction(clientTakeO2);
+        System.out.println("SEND CLIENT TAKE 2: "+ Arrays.toString(os.toByteArray()));
         assertArrayEquals(clientTakeD2, os.toByteArray());
     }
     
@@ -250,6 +260,7 @@ public class TestProtocol {
         os = new ByteArrayOutputStream(32);
         comms = new EloisProtocolComms(null, os);
         comms.sendServerAction(serverPointsO1);
+        System.out.println(Arrays.toString(os.toByteArray()));
         assertArrayEquals(serverPointsD1, os.toByteArray());
     }
     
@@ -480,6 +491,8 @@ public class TestProtocol {
         is = new ByteArrayInputStream(msg);
         comms = new EloisProtocolComms(is, null);
         ServerAction a = comms.recieveServerAction();
+        System.out.println(serverPointsO1.toString());
+        System.out.println(a.toString());
         assertEquals(serverPointsO1, a);
         
         msg = serverPointsDE1.clone();
@@ -518,5 +531,57 @@ public class TestProtocol {
             a = comms.recieveServerAction();
             fail();
         }catch(ProtocolException e){}
+    }
+    
+    @Test
+    public void randomMessage()throws IOException, ProtocolErrorMessage{
+        byte[] msg = nonsense.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        try{
+            ServerAction a = comms.recieveServerAction();
+            fail();
+        }catch(ProtocolException e){}
+        
+        msg = nonsense.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        try{
+            ClientAction a = comms.recieveClientAction();
+            fail();
+        }catch(ProtocolException e){}
+    }
+    
+    @Test
+    public void recieveErrorMessage()throws IOException, ProtocolException{
+        byte[] msg = errorMsgD.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        
+        try{
+            ServerAction a = comms.recieveServerAction();
+            fail();
+        }catch(ProtocolErrorMessage e){
+            assertEquals(errorMsgO, e);
+        }
+        
+        msg = errorMsgD.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        try{
+            ClientAction a = comms.recieveClientAction();
+            fail();
+        }catch(ProtocolErrorMessage e){
+            assertEquals(errorMsgO, e);
+        }
+    }
+    
+    @Test
+    public void sendErrorMessage()throws IOException{
+        os = new ByteArrayOutputStream(32);
+        comms = new EloisProtocolComms(null, os);
+        
+        comms.sendErrorMessage(errorMsgO);
+        assertArrayEquals(errorMsgD, os.toByteArray());
     }
 }

@@ -1,7 +1,5 @@
 package common.server_actions;
 
-import common.server_actions.ServerAction;
-
 public class ServerPoints extends ServerAction{
     public final int id;
     public final int points;
@@ -14,8 +12,13 @@ public class ServerPoints extends ServerAction{
     
     @Override
     public boolean equals(Object o){
+        if(o == null)return false;
         if(!(o instanceof ServerPoints))return false;
         ServerPoints a = (ServerPoints)o;
         return this.command == a.command && this.id == a.id && this.points == a.points;
+    }
+    
+    public String toString(){
+        return "" + id + " "+points;
     }
 }

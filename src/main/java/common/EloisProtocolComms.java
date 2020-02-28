@@ -108,7 +108,7 @@ public class EloisProtocolComms implements CommunicationInterface{
             case Points:{
                 ServerPoints a = (ServerPoints)sa;
                 putInt(a.id);
-                putInt(a.points);
+                putByte((byte)(a.points & 0xFF));
                 return;
             }
             case Wins:{
@@ -206,7 +206,7 @@ public class EloisProtocolComms implements CommunicationInterface{
             }  
             case Dice:{
                 int id = nextInt();
-                DiceValue[] diceList = nextDiceList(5);
+                DiceValue[] diceList = nextDiceList();
                 return new ServerDice(id, diceList);
             } 
             case Take:{ 
@@ -220,7 +220,7 @@ public class EloisProtocolComms implements CommunicationInterface{
             }   
             case Points:{ 
                 int id = nextInt();
-                int points = nextInt();
+                int points = nextByte();
                 return new ServerPoints(id, points);
             }
             case Wins:{
@@ -291,13 +291,9 @@ public class EloisProtocolComms implements CommunicationInterface{
         }
     }
     
-    private DiceValue[] nextDiceList(int max_len) throws IOException, ProtocolException{
-        int len = nextByte();
-        if(len > max_len){
-            throw new ProtocolException("List length exceeds maximum allowed");
-        }
-        DiceValue[] diceList = new DiceValue[len];
-        for(int i = 0; i < len; i++){
+    private DiceValue[] nextDiceList() throws IOException, ProtocolException{
+        DiceValue[] diceList = new DiceValue[5];
+        for(int i = 0; i < 5; i++){
             int v = nextByte() - (int)'0';
             diceList[i] = DiceValue.fromInt(v);
             
@@ -306,8 +302,7 @@ public class EloisProtocolComms implements CommunicationInterface{
     }
     
     private void putDiceList(DiceValue[] l) throws IOException{
-        putByte((byte)l.length);
-        for(int i = 0; i < l.length; i++){
+        for(int i = 0; i < 5; i++){
             byte db = (byte)((int)'0' + l[i].number);
             putByte(db);
         }
@@ -334,17 +329,17 @@ public class EloisProtocolComms implements CommunicationInterface{
         }catch(NumberFormatException e){
             throw new ProtocolException("Invalid Error Message length format");
         }
-        
         byte[] message = new byte[len];
-        is.read(buf, 0, len);
-        return new String(buf, "UTF-8");
+        is.read(message, 0, len);
+        return new String(message, "UTF-8");
     }
     
     private void putMessage(String message) throws IOException{
         putSpace();
         int len = message.length();
         if(len > 99)len = 99;
-        byte[] ml = Integer.toString(len).getBytes(Charset.forName("UTF-8"));
+        String sml = String.format("%02d", len);
+        byte[] ml = sml.getBytes(Charset.forName("UTF-8"));
         os.write(ml, 0, 2);
         byte[] msg = message.getBytes(Charset.forName("UTF-8"));
         os.write(msg, 0, len);
