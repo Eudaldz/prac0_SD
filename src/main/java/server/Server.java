@@ -1,6 +1,7 @@
 package server;
 
 import java.net.ServerSocket;
+import java.net.Socket;
 
 class Server{
     
@@ -11,19 +12,20 @@ class Server{
     public Server(){
         try{
             serverSocket = new ServerSocket( 80, MAX_CONNECTIONS );
-        }catch(Exception e{
+        }catch(Exception e){
             throw new RuntimeException(e.getMessage());
         }
     }
     
     public static void main(String[] args){
-        new Server().run;
+        Server s = new Server();
+        s.run();
     }
     
     public void run(){
         while(true){
             try{
-                Socket client = ss.accept();
+                Socket client = serverSocket.accept();
                 createNewGame(client);
             }catch(Exception e){
                 //TODO
@@ -32,8 +34,9 @@ class Server{
         }
     }
     
-    private createNewGame(Socket client){
-        Thread nt = new Thread(new ServerEngine());
-        nt.start();
+    private void createNewGame(Socket client){
+        
+        //Thread nt = new Thread(new ServerEngine());
+        //nt.start();
     }
 }

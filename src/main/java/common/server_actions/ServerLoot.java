@@ -1,9 +1,6 @@
 package common.server_actions;
-<<<<<<< HEAD
 
 import common.server_actions.ServerAction;
-=======
->>>>>>> 5ac96039029b084a8fcc7961142fcc0ac6aed422
 
 public class ServerLoot extends ServerAction{
     public final int coins;
@@ -11,5 +8,12 @@ public class ServerLoot extends ServerAction{
     public ServerLoot(int coins){
         super(ServerCommand.Loot);
         this.coins = coins;
+    }
+    
+    @Override
+    public boolean equals(Object o){
+        if(!(o instanceof ServerLoot))return false;
+        ServerLoot a = (ServerLoot)o;
+        return this.command == a.command && this.coins == a.coins;
     }
 }

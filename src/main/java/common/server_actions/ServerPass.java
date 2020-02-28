@@ -1,9 +1,6 @@
 package common.server_actions;
-<<<<<<< HEAD
 
 import common.server_actions.ServerAction;
-=======
->>>>>>> 5ac96039029b084a8fcc7961142fcc0ac6aed422
 
 public class ServerPass extends ServerAction{
     public final int id;
@@ -11,5 +8,12 @@ public class ServerPass extends ServerAction{
     public ServerPass(int id){
         super(ServerCommand.Pass);
         this.id = id;
+    }
+    
+    @Override
+    public boolean equals(Object o){
+        if(!(o instanceof ServerPass))return false;
+        ServerPass a = (ServerPass)o;
+        return this.command == a.command && this.id == a.id;
     }
 }

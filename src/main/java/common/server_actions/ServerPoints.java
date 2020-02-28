@@ -1,9 +1,6 @@
 package common.server_actions;
-<<<<<<< HEAD
 
 import common.server_actions.ServerAction;
-=======
->>>>>>> 5ac96039029b084a8fcc7961142fcc0ac6aed422
 
 public class ServerPoints extends ServerAction{
     public final int id;
@@ -13,5 +10,12 @@ public class ServerPoints extends ServerAction{
         super(ServerCommand.Points);
         this.id = id;
         this.points = points;
+    }
+    
+    @Override
+    public boolean equals(Object o){
+        if(!(o instanceof ServerPoints))return false;
+        ServerPoints a = (ServerPoints)o;
+        return this.command == a.command && this.id == a.id && this.points == a.points;
     }
 }

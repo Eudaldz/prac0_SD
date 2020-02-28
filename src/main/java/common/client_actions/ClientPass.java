@@ -7,4 +7,11 @@ public class ClientPass extends ClientAction{
         super(ClientCommand.Pass);
         this.id = id;
     }
+    
+    @Override
+    public boolean equals(Object o){
+        if(!(o instanceof ClientPass))return false;
+        ClientPass a = (ClientPass)o;
+        return this.command == a.command && this.id == a.id;
+    }
 }

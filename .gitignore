@@ -7,3 +7,4 @@ node_modules/
 target/
 *.jar
 build/
+/nbproject/

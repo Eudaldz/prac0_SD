@@ -7,4 +7,11 @@ public class ClientStart extends ClientAction{
         super(ClientCommand.Start);
         this.id = id;
     }
+    
+    @Override
+    public boolean equals(Object o){
+        if(!(o instanceof ClientStart))return false;
+        ClientStart a = (ClientStart)o;
+        return this.command == a.command && this.id == a.id;
+    }
 }

@@ -1,5 +1,5 @@
 //Aquesta classe és el motor del Server.  Tindrà la maquina d'estats que llegirà i escriurà de ComunicacionInterface.
-
+/*
 public class ServerEngine implements Runnable {
     private ComunicationInterface ci;
 
@@ -35,7 +35,7 @@ public class ServerEngine implements Runnable {
                 case CPASS:
                 case CTAKE:
                 case CTURNENDED:
-                /*case ALLEND*/
+                //case ALLEND
             }
         }while (gState != GameState.ALLEND);
         //Code
@@ -55,8 +55,6 @@ public class ServerEngine implements Runnable {
     }
 
     //La màquina d'estats llegirà una linia de Comunication Interface i respondrà adequadament.
-
-
-
-
 }
+
+*/

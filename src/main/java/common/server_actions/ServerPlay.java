@@ -1,9 +1,5 @@
 package common.server_actions;
-<<<<<<< HEAD
-
 import common.server_actions.ServerAction;
-=======
->>>>>>> 5ac96039029b084a8fcc7961142fcc0ac6aed422
 
 public class ServerPlay extends ServerAction{
     public final byte value;
@@ -14,5 +10,12 @@ public class ServerPlay extends ServerAction{
     public ServerPlay(byte value){
         super(ServerCommand.Play);
         this.value = value;
+    }
+    
+    @Override
+    public boolean equals(Object o){
+        if(!(o instanceof ServerPlay))return false;
+        ServerPlay a = (ServerPlay)o;
+        return this.command == a.command && this.value == a.value;
     }
 }
