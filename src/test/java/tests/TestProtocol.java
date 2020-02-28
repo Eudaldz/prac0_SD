@@ -356,41 +356,167 @@ public class TestProtocol {
     
     @Test
     public void recieveServerCash()throws IOException, ProtocolException, ProtocolErrorMessage{
-        
+        byte[] msg = serverCashD1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        ServerAction a = comms.recieveServerAction();
+        assertEquals(serverCashO1, a);
     }
     
     @Test
     public void recieveServerLoot()throws IOException, ProtocolException, ProtocolErrorMessage{
-        
+        byte[] msg = serverLootD1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        ServerAction a = comms.recieveServerAction();
+        assertEquals(serverLootO1, a);
     }
     
     @Test
     public void recieveServerPlay()throws IOException, ProtocolException, ProtocolErrorMessage{
+        byte[] msg = serverPlayD1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        ServerAction a = comms.recieveServerAction();
+        assertEquals(serverPlayO1, a);
         
+        msg = serverPlayD2.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        a = comms.recieveServerAction();
+        assertEquals(serverPlayO2, a);
+        
+        msg = serverPlayDE1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        try{
+            a = comms.recieveServerAction();
+            fail();
+        }catch(ProtocolException e){}
     }
     
     @Test
     public void recieveServerDice()throws IOException, ProtocolException, ProtocolErrorMessage{
+        byte[] msg = serverDiceD1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        ServerAction a = comms.recieveServerAction();
+        assertEquals(serverDiceO1, a);
         
+        msg = serverDiceD2.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        a = comms.recieveServerAction();
+        assertEquals(serverDiceO2, a);
+        
+        msg = serverDiceDE1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        try{
+            a = comms.recieveServerAction();
+            fail();
+        }catch(ProtocolException e){}
+        
+        msg = serverDiceDE2.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        try{
+            a = comms.recieveServerAction();
+            fail();
+        }catch(ProtocolException e){}
+        
+        msg = serverDiceDE3.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        try{
+            a = comms.recieveServerAction();
+            fail();
+        }catch(ProtocolException e){}
     }
     
     @Test
     public void recieveServerTake()throws IOException, ProtocolException, ProtocolErrorMessage{
+        byte[] msg = serverTakeD1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        ServerAction a = comms.recieveServerAction();
+        assertEquals(serverTakeO1, a);
         
+        msg = serverTakeD2.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        a = comms.recieveServerAction();
+        assertEquals(serverTakeO2, a);
+        
+        msg = serverTakeDE1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        try{
+            a = comms.recieveServerAction();
+            fail();
+        }catch(ProtocolException e){}
+        
+        msg = serverTakeDE2.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        try{
+            a = comms.recieveServerAction();
+            fail();
+        }catch(ProtocolException e){}
     }
     
     @Test
     public void recieveServerPass()throws IOException, ProtocolException, ProtocolErrorMessage{
-        
+        byte[] msg = serverPassD1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        ServerAction a = comms.recieveServerAction();
+        assertEquals(serverPassO1, a);
     }
     
     @Test
     public void recieveServerPoints()throws IOException, ProtocolException, ProtocolErrorMessage{
+        byte[] msg = serverPointsD1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        ServerAction a = comms.recieveServerAction();
+        assertEquals(serverPointsO1, a);
         
+        msg = serverPointsDE1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        try{
+            a = comms.recieveServerAction();
+            fail();
+        }catch(ProtocolException e){}
     }
     
     @Test
     public void recieveServerWins()throws IOException, ProtocolException, ProtocolErrorMessage{
+        byte[] msg = serverWinsD1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        ServerAction a = comms.recieveServerAction();
+        assertEquals(serverWinsO1, a);
         
+        msg = serverWinsD2.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        a = comms.recieveServerAction();
+        assertEquals(serverWinsO2, a);
+        
+        msg = serverWinsD3.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        a = comms.recieveServerAction();
+        assertEquals(serverWinsO3, a);
+        
+        msg = serverWinsDE1.clone();
+        is = new ByteArrayInputStream(msg);
+        comms = new EloisProtocolComms(is, null);
+        try{
+            a = comms.recieveServerAction();
+            fail();
+        }catch(ProtocolException e){}
     }
 }
