@@ -23,4 +23,6 @@ public enum DiceValue{
     public static DiceValue fromInt(int d){
         return lookup.get(d);
     }
+
+    // TODO comparator.
 }
