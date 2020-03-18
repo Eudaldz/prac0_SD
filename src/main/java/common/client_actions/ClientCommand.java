@@ -6,7 +6,7 @@ import java.util.HashMap;
 public enum ClientCommand{
     Start("STRT"), Bett("BETT"), Take("TAKE"), Pass("PASS"), Exit("EXIT");
     
-    private String key;
+    public final String key;
     
     private static final Map<String, ClientCommand> lookup = new HashMap<String, ClientCommand>();
     

@@ -1,4 +1,4 @@
-package common;
+package server;
 
 public class InvalidActionException extends Exception{
     

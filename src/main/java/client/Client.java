@@ -43,7 +43,7 @@ public class Client{
         }
         
         //Socket succesfully opened
-        ClientEngine ce = new ClientEngine(s);
+        ClientEngine ce = new ClientEngine(s, new TerminalUI());
         ce.run();
         
     }

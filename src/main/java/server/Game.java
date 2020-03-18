@@ -1,9 +1,10 @@
+/*
 package server;
 
 import java.util.*;
 
 
-private class Game{
+public class Game{
     ArrayList<DiceValue> rolled_dice = new ArrayList<DiceValue>();
     ArrayList<DiceValue> reserved_dice = new ArrayList<DiceValue>();
     
@@ -68,3 +69,4 @@ private class Game{
     }
 }
 
+*/
