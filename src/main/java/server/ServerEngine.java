@@ -186,14 +186,18 @@ public class ServerEngine implements Runnable {
                     break;
                 }
                 case GAME_END: {
-                    /*int winner=2;
-                    if(player2game.getPoints()>player1game.getPoints())winner=1;
-                    else if (player2game.getPoints()<player1game.getPoints())winner=0;
-                    if(!sendAction(new ServerWins((byte) winner))){END=true;break;}
-                    if(!sendAction(new ServerCash(player1game.getGems()))){END=true;break;}
+                    int winner=2;
+                    if(clientGame.getPoints()>serverGame.getPoints()){
+                        winner=1;
+                        clientGame.addGems(gameLoot);
+                    }
+                    else if (clientGame.getPoints()<serverGame.getPoints())winner=0;
+                    
+                    if(!sendAction(new ServerWins((byte) winner))){END=true;break main_loop;}
+                    if(!sendAction(new ServerCash(clientGame.getGems()))){END=true;break main_loop;}
 
                     sessionState = BETT;
-                    break;*/
+                    break;
                 }
             }
         }

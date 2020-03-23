@@ -68,11 +68,13 @@ public class TerminalUI implements UserInterface{
                 if(id == currentId)System.out.print("\n *YOUR GAINED POINTS*: ");
                 else System.out.print("\n *SERVER GAINED POINTS*: ");
                 System.out.println(((ServerPoints)a).points);
+                break;
             }
             case Wins:{
                 if(((ServerWins)a).value == ServerWins.CLIENT) System.out.println("\n *YOU WIN*");
                 else if(((ServerWins)a).value == ServerWins.SERVER) System.out.println("\n *SERVER WINS*");
                 else System.out.println("\n *TIE, NO ONE WINS*");
+                break;
             }
                 
         }

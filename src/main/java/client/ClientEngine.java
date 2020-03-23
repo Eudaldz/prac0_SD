@@ -19,8 +19,8 @@ public class ClientEngine{
     private final static int START = 0;
     private final static int LOBBY = 1;
     private final static int PLAY = 2;
-    private final static int GAME_TURN = 3;
-    private final static int TURN_END = 6;
+    private final static int CLIENT_TURN = 3;
+    private final static int SERVER_TURN = 10;
     private final static int GAME_END = 4;
     
     
@@ -46,7 +46,6 @@ public class ClientEngine{
     
     private void run_game(){
         int sessionState = START;
-        int playerTurn = NULL;
         int firstPlayer = NULL;
         int turnRound = 0;
         DiceValue[] diceRoll;
@@ -87,78 +86,85 @@ public class ClientEngine{
                     ui.showServerAction(sa, UserState.INGAME);
                     switch(((ServerPlay)sa).value){
                         case ServerPlay.CLIENT:
-                            playerTurn = CLIENT;
+                            sessionState = CLIENT_TURN;
                             firstPlayer = CLIENT;
                             break;
                         case ServerPlay.SERVER:
-                            playerTurn = SERVER;
+                            sessionState = SERVER_TURN;
                             firstPlayer = SERVER;
                             break;
                     }
-                    sessionState = GAME_TURN;
                     break;
                 }
                 
-                case GAME_TURN:{
+                case CLIENT_TURN:{
                     ServerAction sa = recieveAction();
                     if(sa == null){END = true; break;}
                     if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break;}
                     ui.showServerAction(sa, UserState.INGAME);
-                    turnRound++;
-                    if(turnRound == 3){
-                        sessionState = TURN_END;
-                    }
                     diceRoll = ((ServerDice)sa).diceList;
-                    
-                    switch(playerTurn){
-                        case CLIENT:{
-                            ClientAction ca = null;
-                            boolean repeat = false;
-                            do{
-                                ui.queryUserAction(UserState.INGAME);
-                                if(ca.command == ClientCommand.Take){
-                                    byte[] diceIndex = ((ClientTake)ca).diceIndexList;
-                                    for(int i = 0; i < diceIndex.length; i++){
-                                        diceTaken[diceIndex[i]] = true;
-                                    }
-                                    if(!checkLegalMove(diceRoll, diceTaken)){
-                                        ui.showInputError("Invalid dice selection. Please try again.");
-                                        repeat = true;
-                                    }
+                    play_loop: while(turnRound < 2){
+                        ClientAction ca = null;
+                        boolean repeat = false;
+                        do{
+                            ca = ui.queryUserAction(UserState.INGAME);
+                            if(ca.command == ClientCommand.Take){
+                                byte[] diceIndex = ((ClientTake)ca).diceIndexList;
+                                for(int i = 0; i < diceIndex.length; i++){
+                                    diceTaken[diceIndex[i]] = true;
                                 }
-                            }while(repeat);
-                            if(ca.command == ClientCommand.Pass){
-                                    sessionState = TURN_END;
+                                if(!checkLegalMove(diceRoll, diceTaken)){
+                                    ui.showInputError("Invalid dice selection. Please try again.");
+                                    repeat = true;
+                                }
                             }
-                            if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break;}
+                        }while(repeat);
+                        if(ca.command == ClientCommand.Pass){
+                            break play_loop;
                         }
-                        case SERVER:{
-                            sa = recieveAction();
-                            if(sa == null){END = true; break;}
-                            if(sa.command != ServerCommand.Pass && sa.command != ServerCommand.Take){sendErrorMessage("Expected TAKE or PASS command."); END = true; break;}
-                            ui.showServerAction(sa, UserState.INGAME);
-                            if(sa.command == ServerCommand.Pass){
-                                sessionState = TURN_END;
-                            }
-                        }
+                        if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break;}
+                        turnRound++;
                     }
-                    break;
-                }
-                
-                
-                case TURN_END:{
-                    ServerAction sa = recieveAction();
+                    sa = recieveAction();
                     if(sa == null){END = true; break;}
                     if(sa.command != ServerCommand.Points){sendErrorMessage("Expected PNTS command."); END = true; break;}
                     ui.showServerAction(sa, UserState.INGAME);
-                    if((playerTurn == CLIENT && firstPlayer == SERVER) || (playerTurn == SERVER && firstPlayer == CLIENT) ){
-                        sessionState = GAME_END;
+                    if(firstPlayer == CLIENT){
+                        sessionState = SERVER_TURN;
                     }else{
-                        sessionState = GAME_TURN;
-                        if(firstPlayer == CLIENT)playerTurn = SERVER;
-                        else playerTurn = CLIENT;
+                        sessionState = GAME_END;
                     }
                     break;
+                    
+                }
+                
+                case SERVER_TURN:{
+                    ServerAction sa = recieveAction();
+                    if(sa == null){END = true; break;}
+                    if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break;}
+                    ui.showServerAction(sa, UserState.INGAME);
+                    diceRoll = ((ServerDice)sa).diceList;
+                    play_loop: while(turnRound < 2){
+                        sa = recieveAction(); 
+                        if(sa == null){END = true; break;}
+                        if(sa.command != ServerCommand.Take || sa.command != ServerCommand.Pass){sendErrorMessage("Expected TAKE or PASS command."); END = true; break;}
+                        ui.showServerAction(sa, UserState.INGAME);
+                        if(sa.command == ServerCommand.Pass){
+                            break play_loop;
+                        }
+                        turnRound++;
+                    }
+                    sa = recieveAction();
+                    if(sa == null){END = true; break;}
+                    if(sa.command != ServerCommand.Points){sendErrorMessage("Expected PNTS command."); END = true; break;}
+                    ui.showServerAction(sa, UserState.INGAME);
+                    if(firstPlayer == SERVER){
+                        sessionState = CLIENT_TURN;
+                    }else{
+                        sessionState = GAME_END;
+                    }
+                    break;
+                    
                 }
                 
                 case GAME_END:{
@@ -183,19 +189,21 @@ public class ClientEngine{
     private boolean checkLegalMove(DiceValue[] roll, boolean[] taken){
         boolean[] step = new boolean[]{false, false, false, false};
         for(int i = 0; i < 5; i++){
-            switch(roll[i]){
-                case Six:
-                    step[0] = true;
-                    break;
-                case Five:
-                    step[1] = true;
-                    break;
-                case Four:
-                    step[2] = true;
-                    break;
-                default:
-                    step[3] = true;
-                    break;
+            if(taken[i]){
+                switch(roll[i]){
+                    case Six:
+                        step[0] = true;
+                        break;
+                    case Five:
+                        step[1] = true;
+                        break;
+                    case Four:
+                        step[2] = true;
+                        break;
+                    default:
+                        step[3] = true;
+                        break;
+                }
             }
         }
         boolean under = false;
