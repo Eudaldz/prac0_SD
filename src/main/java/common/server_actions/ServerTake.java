@@ -19,4 +19,8 @@ public class ServerTake extends ServerAction{
         ServerTake a = (ServerTake)o;
         return this.command == a.command && this.id == a.id && Arrays.equals(diceIndexList, a.diceIndexList);
     }
+    
+    public String toString(){
+        return super.toString()+" "+id+Arrays.toString(diceIndexList);
+    }
 }

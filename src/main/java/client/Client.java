@@ -1,13 +1,16 @@
 package client;
 
+import common.CommunicationInterface;
+import common.EloisProtocolComms;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class Client{
     
-    private String ip;
+    private String hostname;
     private int port;
     private int mode;
     
@@ -16,50 +19,53 @@ public class Client{
     
     public static final int PORT = 80;
     
-    public Client(String ip, int port, int mode){
-        this.ip = ip;
+    public Client(String hostname, int port, int mode){
+        this.hostname = hostname;
         this.port = port;
         this.mode = mode;
         
     }
     
     public void run(){
-        Socket s = null;
-        try{
-            InetAddress serverAddr = InetAddress.getByName(ip);
-            s = new Socket(serverAddr, PORT);
-        }catch(UnknownHostException e){
-            System.out.println("Unknown ip address.");
-            return;
-        }catch(IOException e){
-            System.out.println("Unable to stablish connection.");
-            return;
-        }catch(SecurityException e){
-            System.out.println("Permission denied.");
-            return;
-        }catch(Exception e){
-            System.out.println("Fatal Error: "+e.getMessage());
-            return;
+        System.out.println(hostname);
+        System.out.println(port);
+        try(Socket socket = new Socket(hostname,port)){
+            CommunicationInterface comms = initStream(socket);
+            if(comms != null){
+                ClientEngine ce = new ClientEngine(comms, new TerminalUI());
+                ce.run();
+            }else{
+                System.out.println("Unable to open communication streams.");
+            }
+            
+        }catch(UnknownHostException ex) {
+            System.out.println("Server not found: " + ex.getMessage());
+ 
+        } catch(IOException ex) {
+            System.out.println("I/O error: " + ex.getMessage());
         }
-        
-        //Socket succesfully opened
-        ClientEngine ce = new ClientEngine(s, new TerminalUI());
-        ce.run();
-        
     }
+    
+    private CommunicationInterface initStream(Socket s){
+        try{
+            return new EloisProtocolComms(s.getInputStream(), s.getOutputStream());
+        }catch(Exception e){}
+        return null;
+    }
+    
     
     public static void main(String[] args){
         if(args.length < 4){
-            //TODO print error
+            System.out.println("Invalid command format");
             return;
         }
         String p1 = args[0];
-        String ip = args[1];
+        String hostname = args[1];
         String p2 = args[2];
         String port_string = args[3];
         
         if( !(p1.equals("-s") && p2.equals("-p")) ){
-            //TODO print error
+            System.out.println("Invalid command format");
             return;
         }
         
@@ -70,7 +76,8 @@ public class Client{
             String p3 = args[4];
             String mode_s = args[5];
             if(!p3.equals("-i")){
-                //TODO print error
+                System.out.println("Invalid command format");
+                return;
             }
             switch(mode_s){
                 case "0":
@@ -80,13 +87,13 @@ public class Client{
                     mode = AUTOMATIC_MODE;
                     break;
                 default:
-                    //TODO print error
-                    break;
+                    System.out.println("Invalid command format");
+                    return;
             }
         }
         
         
-        Client c = new Client(ip, port, mode);
+        Client c = new Client(hostname, port, mode); 
         c.run();
     }
 }

@@ -14,7 +14,6 @@ import java.net.Socket;
 public class ClientEngine{
     
     private CommunicationInterface ci;
-    private Socket s;
     private UserInterface ui;
     
     private final static int START = 0;
@@ -29,16 +28,23 @@ public class ClientEngine{
     private final static int SERVER = 2;
     private final static int NULL = -1;
     
-    public ClientEngine(Socket s, UserInterface ui){
-        this.s = s;
+    public ClientEngine(CommunicationInterface ci, UserInterface ui){
+        this.ci = ci;
         this.ui = ui;
     }
     
     public void run(){
-        if(!initStream()){
-            System.out.println("Fatal error while opening the communication streams");
-            return;
-        }
+        run_game();
+        close_comms();
+    }
+    
+    private void close_comms(){
+        try{
+            ci.close();
+        }catch(IOException e){}
+    }
+    
+    private void run_game(){
         int sessionState = START;
         int playerTurn = NULL;
         int firstPlayer = NULL;
@@ -206,16 +212,20 @@ public class ClientEngine{
     private boolean sendAction(ClientAction ca){
         try{
             ci.sendClientAction(ca);
+            System.out.println(ca + " to server");
             return true;
         }catch(IOException e){
             ui.showInternalError("Communication with server failed");
+            e.printStackTrace();
             return false;
         }
     }
     
     private ServerAction recieveAction(){
+        //System.out.println("Waiting action from client");
         try{
             ServerAction sa = ci.recieveServerAction();
+            System.out.println(sa + " from server");
             return sa;
         }catch(IOException e){
             ui.showInternalError("Communication with server failed");
@@ -225,14 +235,6 @@ public class ClientEngine{
             sendErrorMessage(e.getMessage());
         }
         return null;
-    }
-    
-    private boolean initStream(){
-        try{
-            ci = new EloisProtocolComms(s.getInputStream(), s.getOutputStream());
-            return true;
-        }catch(Exception e){}
-        return false;
     }
     
 }

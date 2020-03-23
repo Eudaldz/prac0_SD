@@ -14,4 +14,8 @@ public class ClientStart extends ClientAction{
         ClientStart a = (ClientStart)o;
         return this.command == a.command && this.id == a.id;
     }
+    
+    public String toString(){
+        return super.toString()+" "+id;
+    }
 }

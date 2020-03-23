@@ -6,4 +6,8 @@ public abstract class ClientAction{
     protected ClientAction(ClientCommand c){
         this.command = c;
     }
+    
+    public String toString(){
+        return command.toString();
+    }
 }

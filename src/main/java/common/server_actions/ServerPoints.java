@@ -19,6 +19,6 @@ public class ServerPoints extends ServerAction{
     }
     
     public String toString(){
-        return "" + id + " "+points;
+        return super.toString()+" "+id+" "+points;
     }
 }

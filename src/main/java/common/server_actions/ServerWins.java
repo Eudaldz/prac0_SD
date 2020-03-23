@@ -20,4 +20,8 @@ public class ServerWins extends ServerAction{
         ServerWins a = (ServerWins)o;
         return this.command == a.command && this.value == a.value;
     }
+    
+    public String toString(){
+        return super.toString()+" "+value;
+    }
 }

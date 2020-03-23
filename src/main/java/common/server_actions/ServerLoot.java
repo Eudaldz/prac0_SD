@@ -16,4 +16,8 @@ public class ServerLoot extends ServerAction{
         ServerLoot a = (ServerLoot)o;
         return this.command == a.command && this.coins == a.coins;
     }
+    
+    public String toString(){
+        return super.toString()+" "+coins;
+    }
 }

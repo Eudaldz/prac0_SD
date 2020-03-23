@@ -18,4 +18,8 @@ public class ServerPlay extends ServerAction{
         ServerPlay a = (ServerPlay)o;
         return this.command == a.command && this.value == a.value;
     }
+    
+    public String toString(){
+        return super.toString()+" "+value;
+    }
 }

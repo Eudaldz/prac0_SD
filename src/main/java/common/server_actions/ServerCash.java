@@ -16,4 +16,8 @@ public class ServerCash extends ServerAction{
         ServerCash a = (ServerCash)o;
         return this.command == a.command && this.cash == a.cash;
     }
+    
+    public String toString(){
+        return super.toString()+" "+cash;
+    }
 }

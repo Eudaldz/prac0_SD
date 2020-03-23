@@ -20,4 +20,8 @@ public class ServerDice extends ServerAction{
         ServerDice a = (ServerDice)o;
         return this.command == a.command && this.id == a.id && Arrays.equals(diceList, a.diceList);
     }
+    
+    public String toString(){
+        return super.toString()+" "+id+Arrays.toString(diceList);
+    }
 }

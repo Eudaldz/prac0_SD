@@ -14,4 +14,8 @@ public class ClientPass extends ClientAction{
         ClientPass a = (ClientPass)o;
         return this.command == a.command && this.id == a.id;
     }
+    
+    public String toString(){
+        return super.toString()+" "+id;
+    }
 }

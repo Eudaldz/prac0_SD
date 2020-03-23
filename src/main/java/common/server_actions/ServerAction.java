@@ -8,4 +8,8 @@ public abstract class ServerAction{
     protected ServerAction(ServerCommand c){
         this.command = c;
     }
+    
+    public String toString(){
+        return command.toString();
+    }
 }

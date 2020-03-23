@@ -132,11 +132,7 @@ public class TerminalUI implements UserInterface{
             String key = lsc.next();
             switch(key){
                 case "BETT":
-                    String param = lsc.next();
-                    if(param.matches("\\d+")){
-                        return new ClientBett();
-                    }
-                    break;
+                    return new ClientBett();
                 case "EXIT":
                     return new ClientExit();
             }

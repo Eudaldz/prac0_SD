@@ -16,4 +16,8 @@ public class ServerPass extends ServerAction{
         ServerPass a = (ServerPass)o;
         return this.command == a.command && this.id == a.id;
     }
+    
+    public String toString(){
+        return super.toString()+" "+id;
+    }
 }

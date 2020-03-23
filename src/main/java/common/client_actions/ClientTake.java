@@ -18,4 +18,8 @@ public class ClientTake extends ClientAction{
         ClientTake a = (ClientTake)o;
         return this.command == a.command && this.id == a.id && Arrays.equals(diceIndexList, a.diceIndexList);
     }
+    
+    public String toString(){
+        return super.toString()+ " "+id + Arrays.toString(diceIndexList);
+    }
 }
