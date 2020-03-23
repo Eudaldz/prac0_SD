@@ -4,6 +4,7 @@ import common.DiceValue;
 import common.ProtocolErrorMessage;
 import common.server_actions.*;
 import common.client_actions.*;
+import java.util.Arrays;
 import java.util.Scanner;
 
 
@@ -171,11 +172,11 @@ public class TerminalUI implements UserInterface{
     
     
     private void printDiceList(DiceValue[] dl){
-        
+        System.out.println(Arrays.toString(dl));
     }
     
     private void printDiceIndex(byte[] di){
-        
+        System.out.println(Arrays.toString(di));
     }
 
     @Override

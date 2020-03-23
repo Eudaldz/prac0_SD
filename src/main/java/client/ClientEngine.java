@@ -47,22 +47,20 @@ public class ClientEngine{
     private void run_game(){
         int sessionState = START;
         int firstPlayer = NULL;
-        int turnRound = 0;
-        DiceValue[] diceRoll;
-        boolean[] diceTaken = new boolean[]{false, false, false, false, false};
+        
         
         boolean END = false;
         
         
-        while(!END){
+        main_loop: while(!END){
             switch(sessionState){
                 case START:{
                     ui.welcomeMessage();
                     ClientAction ca = ui.queryUserAction(UserState.START);
-                    if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break;}
+                    if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break main_loop;}
                     ServerAction sa = recieveAction();
-                    if(sa == null){END = true; break;}
-                    if(sa.command != ServerCommand.Cash){sendErrorMessage("Expected CASH command."); END = true; break;}
+                    if(sa == null){END = true; break main_loop;}
+                    if(sa.command != ServerCommand.Cash){sendErrorMessage("Expected CASH command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.START);
                     sessionState = LOBBY;
                     break;
@@ -70,10 +68,10 @@ public class ClientEngine{
                     
                 case LOBBY:{
                     ClientAction ca = ui.queryUserAction(UserState.LOBBY);
-                    if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break;}
+                    if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break main_loop;}
                     ServerAction sa = recieveAction();
-                    if(sa == null){END = true; break;}
-                    if(sa.command != ServerCommand.Loot){sendErrorMessage("Expected LOOT command."); END = true; break;}
+                    if(sa == null){END = true; break main_loop;}
+                    if(sa.command != ServerCommand.Loot){sendErrorMessage("Expected LOOT command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.LOBBY);
                     sessionState = PLAY;
                     break;
@@ -81,8 +79,8 @@ public class ClientEngine{
                 
                 case PLAY:{
                     ServerAction sa = recieveAction();
-                    if(sa == null){END = true; break;}
-                    if(sa.command != ServerCommand.Play){sendErrorMessage("Expected PLAY command."); END = true; break;}
+                    if(sa == null){END = true; break main_loop;}
+                    if(sa.command != ServerCommand.Play){sendErrorMessage("Expected PLAY command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.INGAME);
                     switch(((ServerPlay)sa).value){
                         case ServerPlay.CLIENT:
@@ -98,9 +96,13 @@ public class ClientEngine{
                 }
                 
                 case CLIENT_TURN:{
+                    DiceValue[] diceRoll;
+                    boolean[] diceTaken = new boolean[]{false, false, false, false, false};
+                    int turnRound = 0;
+                    
                     ServerAction sa = recieveAction();
-                    if(sa == null){END = true; break;}
-                    if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break;}
+                    if(sa == null){END = true; break main_loop;}
+                    if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.INGAME);
                     diceRoll = ((ServerDice)sa).diceList;
                     play_loop: while(turnRound < 2){
@@ -122,12 +124,18 @@ public class ClientEngine{
                         if(ca.command == ClientCommand.Pass){
                             break play_loop;
                         }
-                        if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break;}
+                        if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break main_loop;}
+                        sa = recieveAction();
+                        if(sa == null){END = true; break main_loop;}
+                        if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break main_loop;}
+                        System.out.println("SHOW DICE FROM SERVER");
+                        ui.showServerAction(sa, UserState.INGAME);
                         turnRound++;
+                        
                     }
                     sa = recieveAction();
-                    if(sa == null){END = true; break;}
-                    if(sa.command != ServerCommand.Points){sendErrorMessage("Expected PNTS command."); END = true; break;}
+                    if(sa == null){END = true; break main_loop;}
+                    if(sa.command != ServerCommand.Points){sendErrorMessage("Expected PNTS command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.INGAME);
                     if(firstPlayer == CLIENT){
                         sessionState = SERVER_TURN;
@@ -139,24 +147,33 @@ public class ClientEngine{
                 }
                 
                 case SERVER_TURN:{
+                    DiceValue[] diceRoll;
+                    boolean[] diceTaken = new boolean[]{false, false, false, false, false};
+                    int turnRound = 0;
+                    
                     ServerAction sa = recieveAction();
-                    if(sa == null){END = true; break;}
-                    if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break;}
+                    if(sa == null){END = true; break main_loop;}
+                    if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.INGAME);
                     diceRoll = ((ServerDice)sa).diceList;
                     play_loop: while(turnRound < 2){
                         sa = recieveAction(); 
-                        if(sa == null){END = true; break;}
-                        if(sa.command != ServerCommand.Take || sa.command != ServerCommand.Pass){sendErrorMessage("Expected TAKE or PASS command."); END = true; break;}
+                        if(sa == null){END = true; break main_loop;}
+                        System.out.println("------>>>"+sa.command);
+                        if(sa.command != ServerCommand.Take && sa.command != ServerCommand.Pass){sendErrorMessage("Expected TAKE or PASS command."); END = true; break main_loop;}
                         ui.showServerAction(sa, UserState.INGAME);
                         if(sa.command == ServerCommand.Pass){
                             break play_loop;
                         }
+                        sa = recieveAction();
+                        if(sa == null){END = true; break main_loop;}
+                        if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break main_loop;}
+                        ui.showServerAction(sa, UserState.INGAME);
                         turnRound++;
                     }
                     sa = recieveAction();
-                    if(sa == null){END = true; break;}
-                    if(sa.command != ServerCommand.Points){sendErrorMessage("Expected PNTS command."); END = true; break;}
+                    if(sa == null){END = true; break main_loop;}
+                    if(sa.command != ServerCommand.Points){sendErrorMessage("Expected PNTS command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.INGAME);
                     if(firstPlayer == SERVER){
                         sessionState = CLIENT_TURN;
@@ -224,7 +241,7 @@ public class ClientEngine{
     private boolean sendAction(ClientAction ca){
         try{
             ci.sendClientAction(ca);
-            System.out.println(ca + " to server");
+            //System.out.println(ca + " to server");
             return true;
         }catch(IOException e){
             ui.showInternalError("Communication with server failed");
@@ -237,7 +254,7 @@ public class ClientEngine{
         //System.out.println("Waiting action from client");
         try{
             ServerAction sa = ci.recieveServerAction();
-            System.out.println(sa + " from server");
+            //System.out.println(sa + " from server");
             return sa;
         }catch(IOException e){
             ui.showInternalError("Communication with server failed");

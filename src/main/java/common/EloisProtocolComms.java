@@ -32,7 +32,6 @@ public class EloisProtocolComms implements CommunicationInterface{
     }
     
     public void sendClientAction(ClientAction ca)throws IOException{
-        System.out.println("Sending aciont: "+ca);
         ClientCommand command = ca.command;
         String word = command.toString();
         writeWord(word);
