@@ -142,7 +142,9 @@ public class ClientEngine{
                             }
                         }
                     }
+                    break;
                 }
+                
                 
                 case TURN_END:{
                     ServerAction sa = recieveAction();
@@ -156,6 +158,7 @@ public class ClientEngine{
                         if(firstPlayer == CLIENT)playerTurn = SERVER;
                         else playerTurn = CLIENT;
                     }
+                    break;
                 }
                 
                 case GAME_END:{
@@ -170,6 +173,7 @@ public class ClientEngine{
                     ui.showServerAction(sa, UserState.INGAME);
                     
                     sessionState = LOBBY;
+                    break;
                 }
             }
         }
