@@ -24,6 +24,7 @@ public class PlayerGame {
      * We reroll those dices that are not yet reserved.
      */
     public void reroll(){
+        System.out.println("REROLL: "+Arrays.toString(taken));
         for(int i = 0; i < diceNum; i++){
             if(!taken[i]){
                 diceArray[i] = randomDice();
@@ -32,7 +33,7 @@ public class PlayerGame {
     }
     
     public void take(byte[] indices){
-        if(!checkIndices(indices)){
+        if(!legalTake(indices)){
             return;
         }
         
@@ -42,7 +43,7 @@ public class PlayerGame {
         current_turn += 1;
     }
     
-    private boolean checkIndices(byte[] indices){
+    public boolean legalTake(byte[] indices){
         if(indices.length > 5){
             return false;
         }

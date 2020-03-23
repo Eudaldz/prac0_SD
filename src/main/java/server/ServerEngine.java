@@ -169,6 +169,10 @@ public class ServerEngine implements Runnable {
                             break play_loop;
                         }else if(ca.command == ClientCommand.Take){
                             byte[] take = decreaseIndeces(((ClientTake)ca).diceIndexList);
+                            if(!clientGame.legalTake(take)){
+                                sendErrorMessage("Invalid Take indices");
+                                continue play_loop;
+                            }
                             clientGame.take(take);
                             clientGame.reroll();
                             if(!sendAction(new ServerDice(CLIENT_ID,clientGame.getDiceValues()))) {END=true;break main_loop;}
@@ -189,10 +193,14 @@ public class ServerEngine implements Runnable {
                 case GAME_END: {
                     int winner=2;
                     if(clientGame.getPoints()>serverGame.getPoints()){
-                        winner=1;
+                        winner=0;
                         clientGame.addGems(gameLoot);
+                        gameLoot = 0;
                     }
-                    else if (clientGame.getPoints()<serverGame.getPoints())winner=0;
+                    else if (clientGame.getPoints()<serverGame.getPoints()){
+                        winner=1;
+                        gameLoot = 0;
+                    }
                     
                     if(!sendAction(new ServerWins((byte) winner))){END=true;break main_loop;}
                     if(!sendAction(new ServerCash(clientGame.getGems()))){END=true;break main_loop;}

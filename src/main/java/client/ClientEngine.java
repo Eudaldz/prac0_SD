@@ -9,6 +9,7 @@ import common.client_actions.*;
 import common.server_actions.*;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Arrays;
 
 
 public class ClientEngine{
@@ -117,12 +118,15 @@ public class ClientEngine{
                                 for(int i = 0; i < diceIndex.length; i++){
                                     tmpTaken[diceIndex[i]-1] = true;
                                 }
-                                if(!checkLegalMove(diceRoll, tmpTaken)){
+                                if(checkLegalMove(diceRoll, tmpTaken)){
+                                    System.arraycopy(tmpTaken, 0, diceTaken, 0, diceTaken.length);
+                                }else{
                                     ui.showInputError("Invalid dice selection. Please try again.");
                                     repeat = true;
                                 }
                             }
                         }while(repeat);
+                        
                         if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break main_loop;}
                         if(ca.command == ClientCommand.Pass){
                             break play_loop;
@@ -130,7 +134,9 @@ public class ClientEngine{
                         sa = recieveAction();
                         if(sa == null){END = true; break main_loop;}
                         if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break main_loop;}
+                        diceRoll = ((ServerDice)sa).diceList;
                         ui.showServerAction(sa, UserState.INGAME);
+                        
                         turnRound++;
                         
                     }
@@ -203,7 +209,9 @@ public class ClientEngine{
         ui.goodbyMessage();
     }
     
-    private boolean checkLegalMove(DiceValue[] roll, boolean[] taken){
+    private static boolean checkLegalMove(DiceValue[] roll, boolean[] taken){
+        System.out.println(Arrays.toString(taken));
+        System.out.println(Arrays.toString(roll));
         boolean[] step = new boolean[]{false, false, false, false};
         for(int i = 0; i < 5; i++){
             if(taken[i]){
@@ -254,6 +262,12 @@ public class ClientEngine{
             sendErrorMessage(e.getMessage());
         }
         return null;
+    }
+    
+    public static void main(String[] args){
+        DiceValue[] roll = new DiceValue[]{DiceValue.One, DiceValue.Two, DiceValue.Five, DiceValue.Five, DiceValue.Four};
+        boolean[] taken = new boolean[]{false, false, false, true, false};
+        System.out.println(ClientEngine.checkLegalMove(roll, taken));
     }
     
 }

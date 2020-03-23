@@ -114,6 +114,7 @@ public class TerminalUI implements UserInterface{
             String key = lsc.next();
             switch(key){
                 case "STRT":
+                    if(!lsc.hasNext())break;
                     String param = lsc.next();
                     if(param.matches("\\d+")){
                         int id = Integer.parseInt(param);
