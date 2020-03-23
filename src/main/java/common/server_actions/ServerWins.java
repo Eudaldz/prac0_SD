@@ -2,6 +2,9 @@ package common.server_actions;
 
 import common.server_actions.ServerAction;
 
+/**
+ * Represents the server WINS command.
+ */
 public class ServerWins extends ServerAction{
     public final byte value;
     

@@ -18,6 +18,9 @@ package server;
  * 
  */
 
+/**
+ * @Deprecated
+ */
 public enum ServerGameState{
     CSTART, CBETT, CSHIP, CCAPTAIN, CCREW, CPASS, CTAKE, ALLEND, CNEXTTURN, CTURNENDED;
 }

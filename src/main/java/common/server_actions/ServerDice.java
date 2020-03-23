@@ -4,6 +4,9 @@ import common.server_actions.ServerAction;
 import common.DiceValue;
 import java.util.Arrays;
 
+/**
+ * Represents the server DICE command.
+ */
 public class ServerDice extends ServerAction{
     public final int id;
     public final DiceValue[] diceList;

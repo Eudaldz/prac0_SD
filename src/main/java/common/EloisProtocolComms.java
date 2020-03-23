@@ -8,7 +8,9 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
-
+/**
+ *
+ */
 public class EloisProtocolComms implements CommunicationInterface{
     private InputStream is;
     private OutputStream os;

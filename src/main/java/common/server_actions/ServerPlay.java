@@ -1,6 +1,9 @@
 package common.server_actions;
 import common.server_actions.ServerAction;
 
+/**
+ * Represents the server PLAY command.
+ */
 public class ServerPlay extends ServerAction{
     public final byte value;
     

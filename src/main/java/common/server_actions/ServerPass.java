@@ -2,6 +2,9 @@ package common.server_actions;
 
 import common.server_actions.ServerAction;
 
+/**
+ * Represents the server PASS command.
+ */
 public class ServerPass extends ServerAction{
     public final int id;
     

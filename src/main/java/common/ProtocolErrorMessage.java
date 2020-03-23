@@ -1,5 +1,8 @@
 package common;
 
+/**
+ * Custom error message to be thrown when there is a protocol exception.
+ */
 public class ProtocolErrorMessage extends Exception{
     
     public ProtocolErrorMessage(String message){

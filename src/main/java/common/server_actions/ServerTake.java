@@ -3,6 +3,9 @@ package common.server_actions;
 import common.server_actions.ServerAction;
 import java.util.Arrays;
 
+/**
+ * Represents the server TAKE command.
+ */
 public class ServerTake extends ServerAction{
     public final int id;
     public final byte[] diceIndexList;
