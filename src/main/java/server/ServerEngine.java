@@ -135,6 +135,7 @@ public class ServerEngine implements Runnable {
                     break;
                 }
                 case SERVER_PLAY:{
+
                     serverGame.reroll();
                     if(!sendAction(new ServerDice(SERVER_ID,serverGame.getDiceValues()))) {END=true;break main_loop;}
                     play_loop: while(serverGame.newTurnAvailable()){

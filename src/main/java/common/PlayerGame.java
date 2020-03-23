@@ -122,13 +122,14 @@ public class PlayerGame {
     }
     
     public boolean hasGems(){
-        return gems >= 0;
+        return gems > 0;
     }
-    
 
     public int getGems(){
         return this.gems;
     }
+
+    public void decreaseGems(int dec){this.gems -=dec;}
 
     /**
      * Restarts the game but not the gems.
