@@ -172,6 +172,7 @@ public class PlayerGame {
                     DiceValue d = diceArray[idx];
                     if((minTaken <= 4 && d.number > 3) || d.number == minTaken-1){
                         shouldTakeList.add(idx);
+                        if(d.number < minTaken)minTaken = d.number;
                     }
                 }
             }

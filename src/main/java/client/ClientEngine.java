@@ -109,6 +109,7 @@ public class ClientEngine{
                         ClientAction ca = null;
                         boolean repeat = false;
                         do{
+                            repeat = false;
                             ca = ui.queryUserAction(UserState.INGAME);
                             if(ca.command == ClientCommand.Take){
                                 byte[] diceIndex = ((ClientTake)ca).diceIndexList;
