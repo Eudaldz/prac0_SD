@@ -148,12 +148,16 @@ public class TerminalUI implements UserInterface{
             System.out.print("> ");
             Scanner lsc = new Scanner(sc.nextLine());
             String key = lsc.next();
-            switch(key){
+            s: switch(key){
                 case "TAKE":
                     byte[] dl = new byte[5];
                     int i = 0;
                     while(lsc.hasNextByte() && i < 5){
-                        dl[i] = lsc.nextByte();
+                        byte v = lsc.nextByte();
+                        if(v < 1 || v > 5){
+                            break s;
+                        }
+                        dl[i] = v;
                         i++;
                     }
                     byte[] diceList = new byte[i]; 

@@ -58,9 +58,9 @@ public class PlayerGame {
         boolean[] step = new boolean[]{false, false, false, false};
         for(int i = 0; i < 5; i++){
             if(newTaken[i]){
-                if(diceArray[i] == DiceValue.Six)step[0] = true;
-                else if(diceArray[i] == DiceValue.Five)step[1] = true;
-                else if(diceArray[i] == DiceValue.Four)step[2] = true;
+                if(diceArray[i] == DiceValue.Six && !step[0])step[0] = true;
+                else if(diceArray[i] == DiceValue.Five && !step[1])step[1] = true;
+                else if(diceArray[i] == DiceValue.Four && !step[2])step[2] = true;
                 else step[3] = true;
             } 
         }

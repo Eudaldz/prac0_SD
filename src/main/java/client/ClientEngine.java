@@ -112,19 +112,20 @@ public class ClientEngine{
                             ca = ui.queryUserAction(UserState.INGAME);
                             if(ca.command == ClientCommand.Take){
                                 byte[] diceIndex = ((ClientTake)ca).diceIndexList;
+                                boolean[] tmpTaken = diceTaken.clone();
                                 for(int i = 0; i < diceIndex.length; i++){
-                                    diceTaken[diceIndex[i]] = true;
+                                    tmpTaken[diceIndex[i]-1] = true;
                                 }
-                                if(!checkLegalMove(diceRoll, diceTaken)){
+                                if(!checkLegalMove(diceRoll, tmpTaken)){
                                     ui.showInputError("Invalid dice selection. Please try again.");
                                     repeat = true;
                                 }
                             }
                         }while(repeat);
+                        if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break main_loop;}
                         if(ca.command == ClientCommand.Pass){
                             break play_loop;
                         }
-                        if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break main_loop;}
                         sa = recieveAction();
                         if(sa == null){END = true; break main_loop;}
                         if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break main_loop;}
@@ -205,21 +206,11 @@ public class ClientEngine{
         boolean[] step = new boolean[]{false, false, false, false};
         for(int i = 0; i < 5; i++){
             if(taken[i]){
-                switch(roll[i]){
-                    case Six:
-                        step[0] = true;
-                        break;
-                    case Five:
-                        step[1] = true;
-                        break;
-                    case Four:
-                        step[2] = true;
-                        break;
-                    default:
-                        step[3] = true;
-                        break;
-                }
-            }
+                if(roll[i] == DiceValue.Six && !step[0])step[0] = true;
+                else if(roll[i] == DiceValue.Five && !step[1])step[1] = true;
+                else if(roll[i] == DiceValue.Four && !step[2])step[2] = true;
+                else step[3] = true;
+            } 
         }
         boolean under = false;
         for(int i = 3; i >= 0; i--){

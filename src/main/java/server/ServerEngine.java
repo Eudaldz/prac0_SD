@@ -145,7 +145,7 @@ public class ServerEngine implements Runnable {
                         }else{
                             byte[] take = serverGame.takePlayerAuto();
                             serverGame.take(take);
-                            if (!sendAction(new ServerTake(SERVER_ID, take))){END=true; break main_loop;}
+                            if (!sendAction(new ServerTake(SERVER_ID, increaseIndeces(take)))){END=true; break main_loop;}
                             serverGame.reroll();
                             if(!sendAction(new ServerDice(SERVER_ID,serverGame.getDiceValues()))) {END=true;break main_loop;}
                         }
@@ -168,7 +168,7 @@ public class ServerEngine implements Runnable {
                         if(ca.command == ClientCommand.Pass){
                             break play_loop;
                         }else if(ca.command == ClientCommand.Take){
-                            byte[] take = ((ClientTake)ca).diceIndexList;
+                            byte[] take = decreaseIndeces(((ClientTake)ca).diceIndexList);
                             clientGame.take(take);
                             clientGame.reroll();
                             if(!sendAction(new ServerDice(CLIENT_ID,clientGame.getDiceValues()))) {END=true;break main_loop;}
@@ -203,6 +203,23 @@ public class ServerEngine implements Runnable {
             }
         }
     }
+    
+    private byte[] decreaseIndeces(byte[] idx){
+        byte[] result = idx.clone();
+        for(int i = 0; i < idx.length; i++){
+            result[i]--;
+        }
+        return result;
+    }
+    
+    private byte[] increaseIndeces(byte[] idx){
+        byte[] result = idx.clone();
+        for(int i = 0; i < idx.length; i++){
+            result[i]++;
+        }
+        return result;
+    }
+    
     private void sendErrorMessage(String msg){
         try{
             ci.sendErrorMessage(new ProtocolErrorMessage(msg));
