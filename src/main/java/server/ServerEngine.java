@@ -1,5 +1,6 @@
 package server;//Aquesta classe és el motor del Server.  Tindrà la maquina d'estats que llegirà i escriurà de ComunicacionInterface.
 
+import common.PlayerGame;
 import client.Client;
 import client.UserState;
 import common.CommunicationInterface;
@@ -18,7 +19,7 @@ public class ServerEngine implements Runnable {
     public static final int VS_PLAYER = 2;
 
     private CommunicationInterface ci;
-    private PlayerGame player1game, player2game;
+    private PlayerGame clientGame, serverGame;
     private ClientAction ca;
     private String clientAddress;
 
@@ -39,6 +40,9 @@ public class ServerEngine implements Runnable {
     private final static int CLIENT_PASS = 1;
     private final static int CLIENT_PLAY_LOBBY = 2;
     private final static int CLIENT_END = 3;
+    
+    private final static boolean SERVER_TURN = true;
+    private final static boolean CLIENT_TURN = false;
 
 
     private Random rand = new Random();
@@ -46,8 +50,8 @@ public class ServerEngine implements Runnable {
 
     public ServerEngine(CommunicationInterface ci, int mode, String clientAddress){
         this.ci = ci;
-        this.player1game = new PlayerGame();//CLIENT
-        this.player2game = new PlayerGame();//CLIENT OR SERVER
+        this.clientGame = new PlayerGame();//CLIENT
+        this.serverGame = new PlayerGame();//CLIENT OR SERVER
         this.clientAddress = clientAddress;
     }
     
@@ -65,174 +69,131 @@ public class ServerEngine implements Runnable {
  
     private void run_game() {
         boolean END = false;
-        int sesssionState = START;
+        int sessionState = START;
         int SERVER_ID = 0;
+        int CLIENT_ID = 0;
         boolean first_turn=false;
         System.out.println("Begin game");
-        while (!END){
+        int gameLoot = 0;
+        
+        main_loop: while (!END){
             System.out.println("Begin game1");
-            switch(sesssionState){
+            switch(sessionState){
                 case START:{
                     ca = receiveAction(); // TODO S'ha de capturar l'ID (per a la segona fase)
-                    if (ca == null) END = true;
+                    if (ca == null){END = true; break main_loop;}
                     if (ca.command != ClientCommand.Start) {
                         sendErrorMessage("Expected STRT command");
-                        END = true;
-                        break;
+                        continue main_loop;
                     }
-                    if (!sendAction(new ServerCash(player1game.getGems()))) {
+                    CLIENT_ID = ((ClientStart)ca).id;
+                    
+                    if (!sendAction(new ServerCash(clientGame.getGems()))) {
                         END = true;
-                        break;
+                        break main_loop;
                     }
-                    sesssionState = BETT;
+                    sessionState = BETT;
                     break;
                 }
                 case BETT:{
                     ca = receiveAction();
-                    if (ca == null) END = true;
+                    if (ca == null){END = true; break main_loop;}
                     if (ca.command.equals(ClientCommand.Bett)){
-                        player2game.newGame();
-                        player1game.newGame();
-                        if (!sendAction(new ServerLoot(player1game.getGems()))) {
-                            END = true;
-                            break;
+                        clientGame.newGame();
+                        serverGame.newGame();
+                        if(!clientGame.hasGems()){
+                            sendErrorMessage("Not enough gems");
+                            continue main_loop;
                         }
-                        sesssionState = PLAY;
+                        gameLoot += 2;
+                        clientGame.addGems(-1);
+                        if (!sendAction(new ServerLoot(gameLoot))) {
+                            END = true;
+                            break main_loop;
+                        }
+                        sessionState = PLAY;
                     }
                     else if (ca.command.equals(ClientCommand.Exit)) {
                         END = true;
-                        break;
+                        break main_loop;
                     }
                     else{
                         sendErrorMessage("Expected BETT or EXIT command");
+                        continue main_loop;
                     }
                     break;
                 }
                 case PLAY:{
                     first_turn = rand.nextBoolean();
                     if (first_turn){//Case server first
-                        if(!sendAction(new ServerPlay((byte) 1))) {END=true;break;}
-                        sesssionState=SERVER_PLAY;
+                        if(!sendAction(new ServerPlay((byte) 1))) {END=true;break main_loop;}
+                        sessionState=SERVER_PLAY;
                     }else{//Case player first
-                        if(!sendAction(new ServerPlay((byte) 0))) {END=true;break;}
-                        sesssionState=CLIENT_PLAY;
+                        if(!sendAction(new ServerPlay((byte) 0))) {END=true;break main_loop;}
+                        sessionState=CLIENT_PLAY;
                     }
                     break;
                 }
                 case SERVER_PLAY:{
-                    if(!sendAction(new ServerDice(SERVER_ID,player2game.getDiceValues()))) {END=true;break;}
-                    int server_play_state=SERVER_PLAY_START;
-                    boolean END_PLAY=false;
-                    while(!END_PLAY) {
-                        switch (server_play_state) {
-                            case SERVER_PLAY_START:{
-                                if (player2game.newTurnAvailable()) server_play_state = SERVER_PLAY_TAKE;
-                                else server_play_state = SERVER_PLAY_END_TURN;
-                                break;
-                            }
-                            case SERVER_PLAY_TAKE:{
-                                if(player2game.shouldTakeServerAI()) {
-                                    if (!sendAction(new ServerTake(SERVER_ID, player2game.takeServerAI()))) {
-                                        END = true;
-                                        END_PLAY = true;
-                                        break;
-                                    }
-                                    if(player2game.newTurnAvailable())server_play_state=SERVER_PLAY_PASS;
-                                    else server_play_state=SERVER_PLAY_END_TURN;
-                                }
-                                try {
-                                    player2game.roll();
-                                    if(!sendAction(new ServerDice(SERVER_ID, player2game.getDiceValues()))){END=true;END_PLAY=true;break;}
-                                } catch (InvalidActionException e) {
-                                    END_PLAY=true;
-                                    END=true;
-                                    sendErrorMessage(e.getMessage());
-                                }
-                                if(player2game.newTurnAvailable()) server_play_state=SERVER_PLAY_TAKE;
-                                else server_play_state=SERVER_PLAY_END_TURN;
-                                break;
-                            }
-
-                            case SERVER_PLAY_PASS:{
-                                if(!sendAction(new ServerPass(SERVER_ID))){END=true;END_PLAY=true;break;}
-                                server_play_state=SERVER_PLAY_END_TURN;
-                                break;
-                            }
-                            case SERVER_PLAY_END_TURN: {
-                                if(!sendAction(new ServerPoints(SERVER_ID,player2game.getPoints()))){END=true;END_PLAY=true;break;}
-                                END_PLAY=true;
-                                break;
-                            }
-                        }
-                        if(first_turn){
-                            sesssionState=CLIENT_PLAY;
+                    serverGame.reroll();
+                    if(!sendAction(new ServerDice(SERVER_ID,serverGame.getDiceValues()))) {END=true;break main_loop;}
+                    play_loop: while(serverGame.newTurnAvailable()){
+                        if(serverGame.shouldPlayerPass()){
+                            if(!sendAction(new ServerPass(SERVER_ID))){END=true;break main_loop;}
+                            break play_loop;
                         }else{
-                            sesssionState=GAME_END;
+                            byte[] take = serverGame.takePlayerAuto();
+                            serverGame.take(take);
+                            if (!sendAction(new ServerTake(SERVER_ID, take))){END=true; break main_loop;}
+                            serverGame.reroll();
+                            if(!sendAction(new ServerDice(SERVER_ID,serverGame.getDiceValues()))) {END=true;break main_loop;}
                         }
+                    }
+                    int points = serverGame.getPoints();
+                    if(!sendAction(new ServerPoints(SERVER_ID,points))){END=true;break main_loop;}
+                    if(first_turn == SERVER_TURN){
+                        sessionState = CLIENT_PLAY;
+                    }else{
+                        sessionState = GAME_END;
                     }
                     break;
                 }
                 case CLIENT_PLAY:{
-                    if(!sendAction(new ServerDice(SERVER_ID,player1game.getDiceValues()))) {END=true;break;}
-                    boolean END_PLAY=false;
-                    int client_play_state=0;
-                    while(!END_PLAY){
-                        switch(client_play_state){
-                            case CLIENT_PLAY_LOBBY:{
-                                ca = receiveAction();
-                                if (ca.equals(ClientCommand.Take) && player1game.newTurnAvailable()){
-                                    client_play_state=CLIENT_TAKE;
-                                }else if (ca.equals(ClientCommand.Pass)){
-                                    client_play_state=CLIENT_PASS;
-                                }else if (!player1game.newTurnAvailable()) {
-                                    client_play_state=CLIENT_END;
-                                }else{
-                                    sendErrorMessage("Not the message expected");
-                                }
-                                break;
-                            }
-                            case CLIENT_TAKE:{
-                                try {
-                                    player1game.reserve(((ClientTake)ca).diceIndexList);
-                                } catch (InvalidActionException e) {
-                                    sendErrorMessage(e.getMessage());
-                                }
-                                try {
-                                    player1game.roll();
-                                } catch (InvalidActionException e) {
-                                    e.printStackTrace();
-                                }
-                                if(!sendAction(new ServerDice(0, player1game.getDiceValues()))){END=true;END_PLAY=true;break;}
-                                client_play_state=CLIENT_PLAY_LOBBY;
-
-                            }
-                            case CLIENT_PASS:{
-                                if(!player1game.canPass()){
-                                    sendErrorMessage("Invalid action, cannot PASS");
-                                    END_PLAY=true;
-                                    END=true;
-                                }
-                                client_play_state=CLIENT_END;
-                            }
-                            case CLIENT_END:{
-                                if(!sendAction(new ServerPoints(1,player1game.getPoints()))){END=true;END_PLAY=true;break;}
-                                END_PLAY=true;
-                                break;
-                            }
+                    clientGame.reroll();
+                    if(!sendAction(new ServerDice(CLIENT_ID,clientGame.getDiceValues()))) {END=true;break main_loop;}
+                    play_loop: while(clientGame.newTurnAvailable()){
+                        ca = receiveAction();
+                        if(ca == null){END = true; break main_loop;}
+                        if(ca.command == ClientCommand.Pass){
+                            break play_loop;
+                        }else if(ca.command == ClientCommand.Take){
+                            byte[] take = ((ClientTake)ca).diceIndexList;
+                            clientGame.take(take);
+                            clientGame.reroll();
+                            if(!sendAction(new ServerDice(CLIENT_ID,clientGame.getDiceValues()))) {END=true;break main_loop;}
+                        }else{
+                            sendErrorMessage("Expected PASS or TAKE command");
+                            continue main_loop;
                         }
                     }
-                    ca = receiveAction();
-
+                    int points = clientGame.getPoints();
+                    if(!sendAction(new ServerPoints(CLIENT_ID,points))){END=true;break main_loop;}
+                    if(first_turn == CLIENT_TURN){
+                        sessionState = SERVER_PLAY;
+                    }else{
+                        sessionState = GAME_END;
+                    }
                     break;
                 }
                 case GAME_END: {
-                    int winner=2;
+                    /*int winner=2;
                     if(player2game.getPoints()>player1game.getPoints())winner=1;
                     else if (player2game.getPoints()<player1game.getPoints())winner=0;
                     if(!sendAction(new ServerWins((byte) winner))){END=true;break;}
                     if(!sendAction(new ServerCash(player1game.getGems()))){END=true;break;}
 
-                    sesssionState = BETT;
+                    sessionState = BETT;
+                    break;*/
                 }
             }
         }
