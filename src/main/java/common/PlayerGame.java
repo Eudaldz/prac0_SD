@@ -165,15 +165,16 @@ public class PlayerGame {
                 newDiceIndex.add(ind);
             }
         }
+        if(minTaken < 4)minTaken = 4;
         
         ArrayList<Byte> shouldTakeList = new ArrayList<Byte>();
         for(int reps = 0; reps < newDiceIndex.size(); reps++){
             for(byte idx: newDiceIndex){
                 if(!shouldTakeList.contains(idx)){
                     DiceValue d = diceArray[idx];
-                    if((minTaken <= 4 && d.number > 3) || d.number == minTaken-1){
+                    if((minTaken <= 4 && d.number > 3) || (minTaken > 4 && d.number == minTaken-1)){
                         shouldTakeList.add(idx);
-                        if(d.number < minTaken)minTaken = d.number;
+                        if(d.number < minTaken)minTaken = d.number < 4 ? 4 : d.number;
                     }
                 }
             }
