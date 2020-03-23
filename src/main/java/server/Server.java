@@ -7,17 +7,28 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+/**
+ * This class represents the Server. Establishes communication and runs the ServerEngine.
+ */
 class Server{
     public static int MAX_CONNECTIONS = 50;
     int mode;
     int port;
-    
-    
+
+    /**
+     *
+     * @param port
+     * @param mode
+     */
     public Server(int port, int mode){
         this.mode = mode;
         this.port = port;
     }
-    
+
+    /**
+     *
+     * @param args
+     */
     public static void main(String[] args){
         if(args.length !=4 ){
             System.out.println("Invalid command format");
@@ -50,7 +61,10 @@ class Server{
         Server s = new Server(port, mode);
         s.run();
     }
-    
+
+    /**
+     *
+     */
     public void run(){
         System.out.println(port);
         try(ServerSocket serverSocket = new ServerSocket(port)){
@@ -68,11 +82,22 @@ class Server{
             ex.printStackTrace();
         }
     }
-    
+
+    /**
+     *
+     * @param s
+     * @return
+     * @throws Exception
+     */
     private CommunicationInterface initStream(Socket s)throws Exception{
         return new EloisProtocolComms(s.getInputStream(), s.getOutputStream());
     }
-    
+
+    /**
+     *
+     * @param client
+     * @throws Exception
+     */
     private void createNewGame(Socket client)throws Exception{
         CommunicationInterface comms = initStream(client);
         if(comms != null){

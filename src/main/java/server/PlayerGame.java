@@ -5,14 +5,16 @@ import common.DiceValue;
 
 import java.util.*;
 
-
+/**
+ * This class represents the game variables and actions a player can do in a game. And gives tools to check whether the actions are legal or not.
+ */
 public class PlayerGame {
     ArrayList<DiceValue> dice_array;
 
     private ArrayList<DiceValue> reserved_dice;
 
     private ArrayList<Integer> not_reserved;
-    private int current_turn=0;
+    private int current_turn;
     private int gems = 100;
 
     private Random rand = new Random();
@@ -26,6 +28,23 @@ public class PlayerGame {
         not_reserved.add(2);
         not_reserved.add(3);
         not_reserved.add(4);
+        current_turn=0;
+        roll_first();
+    }
+
+    /**
+     * Restarts the game but not the gems.
+     */
+    public void newGame(){
+        dice_array = new ArrayList<DiceValue>();
+        reserved_dice = new ArrayList<>();
+        not_reserved = new ArrayList<Integer>();
+        not_reserved.add(0);
+        not_reserved.add(1);
+        not_reserved.add(2);
+        not_reserved.add(3);
+        not_reserved.add(4);
+        current_turn=0;
         roll_first();
     }
 
@@ -135,6 +154,10 @@ public class PlayerGame {
         else return 0;
     }
 
+    /**
+     *
+     * @param gems
+     */
     public void updateGems(int gems){
         this.gems=gems;
     }
@@ -143,20 +166,6 @@ public class PlayerGame {
         return this.gems;
     }
 
-    /**
-     * Restarts the game but not the gems.
-     */
-    public void newGame(){
-        dice_array = new ArrayList<DiceValue>();
-        reserved_dice = new ArrayList<>();
-        not_reserved = new ArrayList<Integer>();
-        not_reserved.add(0);
-        not_reserved.add(1);
-        not_reserved.add(2);
-        not_reserved.add(3);
-        not_reserved.add(4);
-        roll_first();
-    }
 
     /**
      * For the server AI

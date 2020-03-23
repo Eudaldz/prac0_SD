@@ -2,6 +2,9 @@ package common.server_actions;
 
 import common.server_actions.ServerAction;
 
+/**
+ * Represents the server CASH command.
+ */
 public class ServerCash extends ServerAction{
     public final int cash;
     

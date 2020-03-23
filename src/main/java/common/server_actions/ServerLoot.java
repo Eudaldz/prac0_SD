@@ -2,6 +2,9 @@ package common.server_actions;
 
 import common.server_actions.ServerAction;
 
+/**
+ * Represents the serer LOOT command.
+ */
 public class ServerLoot extends ServerAction{
     public final int coins;
     

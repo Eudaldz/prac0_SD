@@ -1,5 +1,8 @@
 package common.server_actions;
 
+/**
+ * Represents the server PNTS command.
+ */
 public class ServerPoints extends ServerAction{
     public final int id;
     public final int points;
