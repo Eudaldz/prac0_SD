@@ -128,7 +128,6 @@ public class ClientEngine{
                         sa = recieveAction();
                         if(sa == null){END = true; break main_loop;}
                         if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break main_loop;}
-                        System.out.println("SHOW DICE FROM SERVER");
                         ui.showServerAction(sa, UserState.INGAME);
                         turnRound++;
                         
@@ -159,7 +158,6 @@ public class ClientEngine{
                     play_loop: while(turnRound < 2){
                         sa = recieveAction(); 
                         if(sa == null){END = true; break main_loop;}
-                        System.out.println("------>>>"+sa.command);
                         if(sa.command != ServerCommand.Take && sa.command != ServerCommand.Pass){sendErrorMessage("Expected TAKE or PASS command."); END = true; break main_loop;}
                         ui.showServerAction(sa, UserState.INGAME);
                         if(sa.command == ServerCommand.Pass){

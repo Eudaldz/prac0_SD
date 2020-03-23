@@ -73,7 +73,7 @@ public class PlayerGame {
     }
     
     private DiceValue randomDice(){
-        int r = rand.nextInt(5) + 1;
+        int r = rand.nextInt(6) + 1;
         return DiceValue.fromInt(r);
     }
 
