@@ -97,11 +97,11 @@ public class ServerEnginePvP implements Runnable {
                     if (ca1.command != ClientCommand.Start) {
                         sendErrorMessageC1("Expected STRT command");
                         END = true;
-                        break;
+                        break main_loop;
                     }
                     if (!sendActionC1(new ServerCash(player1game.getGems()))) {
                         END = true;
-                        break;
+                        break main_loop;
                     }
                     ca2 = receiveActionC2();
                     CLIENT_2_ID=((ClientStart)ca2).id;
@@ -109,14 +109,14 @@ public class ServerEnginePvP implements Runnable {
                     if (ca2.command != ClientCommand.Start) {
                         sendErrorMessageC2("Expected STRT command");
                         END = true;
-                        break;
+                        break main_loop;
                     }
                     if (!sendActionC2(new ServerCash(player2game.getGems()))) {
                         END = true;
-                        break;
+                        break main_loop;
                     }
                     sessionState = LOBBY;
-                    break;
+                    break main_loop;
                 }
                 case LOBBY:{
                     ca1 = receiveActionC1();
@@ -129,12 +129,12 @@ public class ServerEnginePvP implements Runnable {
                     else if (ca1.command.equals(ClientCommand.Exit)) {
                         END = true;
                         lobby_money=0;
-                        break;
+                        break main_loop;
                     }
                     else{
                         sendErrorMessageC1("Expected BETT or EXIT command");
                         END=true;
-                        break;
+                        break main_loop;
                     }
                     ca2 = receiveActionC2();
                     if (ca2 == null) END = true;
@@ -146,7 +146,7 @@ public class ServerEnginePvP implements Runnable {
                     else if (ca2.command.equals(ClientCommand.Exit)) {
                         END = true;
                         lobby_money=0;
-                        break;
+                        break main_loop;
                     }
                     else{
                         sendErrorMessageC2("Expected BETT or EXIT command");
@@ -156,19 +156,19 @@ public class ServerEnginePvP implements Runnable {
                     //Case both ca1 and ca2 are BETT.
                     if (!sendActionC1(new ServerLoot(player1game.getGems())) || !sendActionC2(new ServerLoot(player1game.getGems())) ) {
                         END = true;
-                        break;
+                        break main_loop;
                     }
                     sessionState = PLAY;
-                    break;
+                    break main_loop;
                 }
                 case PLAY:{
                     first_turn = rand.nextBoolean();
                     if (first_turn){//Case CLIENT_1 first
-                        if(!sendActionC1(new ServerPlay((byte) 0)) || !sendActionC2(new ServerPlay((byte) 1))) {END=true;break;}
+                        if(!sendActionC1(new ServerPlay((byte) 0)) || !sendActionC2(new ServerPlay((byte) 1))) {END=true;break main_loop;}
                     }else {//Case CLIENT_2 first
                         if (!sendActionC1(new ServerPlay((byte) 1)) || !sendActionC2(new ServerPlay((byte) 0))) {
                             END = true;
-                            break;
+                            break main_loop;
                         }
                     }
                     current_turn=first_turn;
@@ -177,7 +177,7 @@ public class ServerEnginePvP implements Runnable {
                     }else{
                         sessionState=CLIENT_2_PLAY;
                     }
-                    break;
+                    break main_loop;
                 }
                 case CLIENT_1_PLAY:{
                     player1game.reroll();
