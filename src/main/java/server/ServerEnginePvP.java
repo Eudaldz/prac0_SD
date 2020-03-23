@@ -1,21 +1,16 @@
+/**
+ * This class is the engine of the Server in the mode Player vs Player.
+ * This class will communicate with both clients acting according to its state machine.
+ */
+package server;
 
-package server;//Aquesta classe és el motor del Server.  Tindrà la maquina d'estats que llegirà i escriurà de ComunicacionInterface.
-
-import client.Client;
-import client.UserState;
 import common.*;
-import common.ProtocolErrorMessage;
-import common.ProtocolException;
 import common.server_actions.*;
 import common.client_actions.*;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Random;
 
 public class ServerEnginePvP implements Runnable {
-
-    public static final int VS_SERVER = 1;
-    public static final int VS_PLAYER = 2;
 
     private CommunicationInterface ci1;
     private CommunicationInterface ci2;
@@ -24,10 +19,7 @@ public class ServerEnginePvP implements Runnable {
     private ClientAction ca2;
     private String client1Address,client2Address;
 
-    private int lobby_money;
     private final static int ROUND_FEE = 1;
-
-    private int last_loser;//0 means tie or first game, 1 means CLIENT_1 lost the last game, 2 means CLIENT_2 lost the last game
 
     private final static int CLIENT_1 = 0;
     private final static int CLIENT_2 = 1;
@@ -35,24 +27,12 @@ public class ServerEnginePvP implements Runnable {
     private int CLIENT_2_ID=CLIENT_2;
 
     private final static int START = 0;
+    private final static int LOBBY = 1;
     private final static int PLAY = 2;
     private final static int CLIENT_1_PLAY = 3;
     private final static int CLIENT_2_PLAY = 4;
-    private final static int GAME_END = 5;
-    private final static int LOBBY = 7;
-
-    private final static int SERVER_PLAY_START = 0;
-    private final static int SERVER_PLAY_TAKE = 1;
-    private final static int SERVER_PLAY_PASS = 2;
-    private final static int SERVER_PLAY_END_TURN = 3;
-
-    private final static int CLIENT_TAKE = 0;
-    private final static int CLIENT_PASS = 1;
-    private final static int CLIENT_PLAY_LOBBY = 2;
-    private final static int CLIENT_END = 3;
 
     private Random rand = new Random();
-
 
     public ServerEnginePvP(CommunicationInterface ci1, CommunicationInterface ci2, int mode, String client1Address, String client2Address){
         this.ci1 = ci1;//Communication interface for player 1.
@@ -61,8 +41,6 @@ public class ServerEnginePvP implements Runnable {
         this.player2game = new PlayerGame();//PLAYER 2
         this.client1Address = client1Address;
         this.client2Address = client2Address;
-        last_loser=0;//Case first game
-        lobby_money=0;
     }
 
     @Override
@@ -80,8 +58,9 @@ public class ServerEnginePvP implements Runnable {
 
     private void run_game() {
         boolean END = false;
+        int last_loser=0;//0 means tie or first game, 1 means CLIENT_1 lost the last game, 2 means CLIENT_2 lost the last game
+        int lobby_money=0;
         int sessionState = START;
-        int SERVER_ID = 0;
         boolean first_turn=false;//false --> CLIENT_1 starts | true --> CLIENT_2 starts
         boolean current_turn=false;//false --> CLIENT_1 turn | true --> CLIENT_2 turn
 
@@ -93,7 +72,7 @@ public class ServerEnginePvP implements Runnable {
                     ca1 = receiveActionC1();
                     CLIENT_1_ID=((ClientStart)ca1).id;
 
-                    if (ca1 == null) END = true;
+                    if (ca1 == null) {END = true;break main_loop;}
                     if (ca1.command != ClientCommand.Start) {
                         sendErrorMessageC1("Expected STRT command");
                         END = true;
@@ -105,7 +84,7 @@ public class ServerEnginePvP implements Runnable {
                     }
                     ca2 = receiveActionC2();
                     CLIENT_2_ID=((ClientStart)ca2).id;
-                    if (ca2 == null) END = true;
+                    if (ca2 == null) {END = true;break main_loop;}
                     if (ca2.command != ClientCommand.Start) {
                         sendErrorMessageC2("Expected STRT command");
                         END = true;
@@ -162,7 +141,10 @@ public class ServerEnginePvP implements Runnable {
                     break main_loop;
                 }
                 case PLAY:{
-                    first_turn = rand.nextBoolean();
+                    if (last_loser == 0) first_turn = rand.nextBoolean();
+                    else if(last_loser == 1) first_turn=false;
+                    else first_turn=true;
+
                     if (first_turn){//Case CLIENT_1 first
                         if(!sendActionC1(new ServerPlay((byte) 0)) || !sendActionC2(new ServerPlay((byte) 1))) {END=true;break main_loop;}
                     }else {//Case CLIENT_2 first
@@ -253,11 +235,11 @@ public class ServerEnginePvP implements Runnable {
                         if(player1game.getPoints() > player2game.getPoints()){//Wins player1
                             player1game.addGems(lobby_money);
                             if(!sendActionC1(new ServerWins((byte) 0))){END=true;break main_loop;}
-                            if(!sendActionC1(new ServerWins((byte) 0))){END=true;break main_loop;}
+                            if(!sendActionC2(new ServerWins((byte) 1))){END=true;break main_loop;}
                         }else if (player1game.getPoints() < player2game.getPoints()){//Wins player2
                             player2game.addGems(lobby_money);
                             if(!sendActionC1(new ServerWins((byte) 1))){END=true;break main_loop;}
-                            if(!sendActionC1(new ServerWins((byte) 1))){END=true;break main_loop;}
+                            if(!sendActionC2(new ServerWins((byte) 0))){END=true;break main_loop;}
                         }else{//Case of a tie
                             if(!sendActionC1(new ServerWins((byte) 2))){END=true;break main_loop;}
                             if(!sendActionC2(new ServerWins((byte) 2))){END=true;break main_loop;}
