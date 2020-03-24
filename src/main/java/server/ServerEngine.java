@@ -66,6 +66,7 @@ public class ServerEngine implements Runnable {
         int SERVER_ID = 0,CLIENT_ID=0;
         String error_msg;
         boolean first_turn=false;
+        int last_loser = 0; //0 -> tie | 1 ->client | 2 ->server
 
         System.out.println("Begin game");
         int gameLoot = 0;
@@ -119,6 +120,8 @@ public class ServerEngine implements Runnable {
                 }
                 case PLAY:{
                     first_turn = rand.nextBoolean();
+                    if(last_loser == 1)first_turn = false;
+                    else if(last_loser == 2)first_turn = true;
                     if (first_turn){//Case server first
                         if(!sendAction(new ServerPlay((byte) 1))) {END=true;break main_loop;}
                         sessionState=SERVER_PLAY;
@@ -233,7 +236,7 @@ public class ServerEngine implements Runnable {
         System.out.println("Waiting action from client...");
         try {
             ClientAction ca = ci.recieveClientAction();
-            logger.info(ca.toString());
+            //logger.info(ca.toString());
             System.out.println(ca + " from "+clientAddress);
             return ca;
         } catch (IOException e) {
@@ -249,7 +252,7 @@ public class ServerEngine implements Runnable {
     private boolean sendAction(ServerAction sa){
         try {
             ci.sendServerAction(sa);
-            logger.info(sa.toString());
+            //logger.info(sa.toString());
             System.out.println(sa + " to "+clientAddress);
             return true;
         } catch (IOException e) {
@@ -260,7 +263,7 @@ public class ServerEngine implements Runnable {
 
     private void loggerConfig(){
         logger = Logger.getLogger("myLog");
-        String basePath = new File("src/main/Server"+Thread.currentThread().getName()+".log").getAbsolutePath();
+        String basePath = new File(Thread.currentThread().getName()+".log").getAbsolutePath();
 
         try {
             // This block configure the logger with handler and formatter

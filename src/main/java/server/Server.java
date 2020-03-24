@@ -51,10 +51,10 @@ class Server{
         int mode = 0;
         switch(mode_string){
             case "1":
-                mode = Server.VS_PLAYER;
+                mode = Server.VS_SERVER;
                 break;
             case "2":
-                mode = Server.VS_SERVER;
+                mode = Server.VS_PLAYER;
                 break;
             default:
                 System.out.println("Invalid command format");

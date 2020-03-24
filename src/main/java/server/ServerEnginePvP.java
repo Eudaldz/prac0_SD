@@ -76,36 +76,32 @@ public class ServerEnginePvP implements Runnable {
 
         System.out.println("Begin game");
         main_loop : while (!END){
-            System.out.println("Begin game");
             switch(sessionState){
                 case START:{
+                    System.out.println("START STATE");
                     ca1 = receiveActionC1();
-                    if (ca1 == null) {END = true;break main_loop;}
-                    if (ca1.command != ClientCommand.Start) {
-                        sendErrorMessageC1("Expected STRT command");
-                        END = true;
-                        continue main_loop;
-                    }
-                    CLIENT_1_ID=((ClientStart)ca1).id;
-                    
+                    System.out.println("Start recieved from 1");
                     ca2 = receiveActionC2();
+                    System.out.println("Start recieved from 2");
+                    if (ca1 == null) {END = true;break main_loop;}
                     if (ca2 == null) {END = true;break main_loop;}
-                    if (ca2.command != ClientCommand.Start) {
-                        sendErrorMessageC2("Expected STRT command");
+                    
+                    if(ca1.command == ClientCommand.Start && ca2.command == ClientCommand.Start){
+                        CLIENT_1_ID=((ClientStart)ca1).id;
+                        CLIENT_2_ID=((ClientStart)ca2).id;
+                        if (!sendActionC1(new ServerCash(player1game.getGems()))) {END = true;break main_loop;}
+                        if (!sendActionC2(new ServerCash(player2game.getGems()))) {END = true;break main_loop;}
+                        sessionState = LOBBY;
+                    
+                    }else if(ca1.command == ClientCommand.Exit || ca2.command == ClientCommand.Exit){
+                        sendErrorMessageBoth("Game terminated");
                         END = true;
+                        break main_loop;
+                    
+                    }else{
+                        sendErrorMessageBoth("Invalid response from certain client");
                         continue main_loop;
                     }
-                    CLIENT_2_ID=((ClientStart)ca2).id;
-                    
-                    if (!sendActionC1(new ServerCash(player1game.getGems()))) {
-                        END = true;
-                        break main_loop;
-                    }
-                    if (!sendActionC2(new ServerCash(player2game.getGems()))) {
-                        END = true;
-                        break main_loop;
-                    }
-                    sessionState = LOBBY;
                     break;
                 }
                 case LOBBY:{
@@ -228,13 +224,20 @@ public class ServerEnginePvP implements Runnable {
                         player1game.addGems(gameLoot);
                         winnerC1 = 0;
                         winnerC2 = 1;
+                        last_loser = 2;
+                        gameLoot = 0;
                     }else if (player1game.getPoints() < player2game.getPoints()){//Wins player2
                         player2game.addGems(gameLoot);
                         winnerC1 = 1;
                         winnerC2 = 0;
+                        last_loser = 1;
+                        gameLoot = 0;
                     }
                     if(!sendActionC1(new ServerWins((byte) winnerC1))){END=true;break main_loop;}
                     if(!sendActionC2(new ServerWins((byte) winnerC2))){END=true;break main_loop;}
+                    if (!sendActionC1(new ServerCash(player1game.getGems()))) {END = true;break main_loop;}
+                    if (!sendActionC2(new ServerCash(player2game.getGems()))) {END = true;break main_loop;}
+                    
                     sessionState = LOBBY;
                 }
             }
@@ -280,7 +283,7 @@ public class ServerEnginePvP implements Runnable {
         System.out.println("Waiting action from client...");
         try {
             ClientAction ca = ci1.recieveClientAction();
-            logger.info(ca.toString());
+            //logger.info(ca.toString());
             System.out.println(ca + " from "+client1Address);
             return ca;
         } catch (IOException e) {
@@ -297,7 +300,7 @@ public class ServerEnginePvP implements Runnable {
         System.out.println("Waiting action from client...");
         try {
             ClientAction ca = ci2.recieveClientAction();
-            logger.info(ca.toString());
+            //logger.info(ca.toString());
             System.out.println(ca + " from "+client2Address);
             return ca;
         } catch (IOException e) {
@@ -319,7 +322,7 @@ public class ServerEnginePvP implements Runnable {
     private boolean sendActionC1(ServerAction sa){
         try {
             ci1.sendServerAction(sa);
-            logger.info(sa.toString());
+            //logger.info(sa.toString());
             System.out.println(sa + " to "+client1Address);
             return true;
         } catch (IOException e) {
@@ -331,7 +334,7 @@ public class ServerEnginePvP implements Runnable {
     private boolean sendActionC2(ServerAction sa){
         try {
             ci2.sendServerAction(sa);
-            logger.info(sa.toString());
+            //logger.info(sa.toString());
             System.out.println(sa + " to "+client2Address);
             return true;
         } catch (IOException e) {
