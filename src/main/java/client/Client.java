@@ -32,7 +32,13 @@ public class Client{
         try(Socket socket = new Socket(hostname,port)){
             CommunicationInterface comms = initStream(socket);
             if(comms != null){
-                ClientEngine ce = new ClientEngine(comms, new TerminalUI());
+                UserInterface ui;
+                if(mode == MANUAL_MODE){
+                    ui = new TerminalUI();
+                }else{
+                    ui = new TerminalUIAuto();
+                }
+                ClientEngine ce = new ClientEngine(comms, ui);
                 ce.run();
             }else{
                 System.out.println("Unable to open communication streams.");

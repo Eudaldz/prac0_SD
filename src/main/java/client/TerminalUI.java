@@ -11,7 +11,7 @@ import java.util.Scanner;
 public class TerminalUI implements UserInterface{
 
     private Scanner sc;
-    private int currentId;
+    protected int currentId;
     
     public TerminalUI(){
         sc = new Scanner(System.in);
@@ -94,20 +94,20 @@ public class TerminalUI implements UserInterface{
         System.out.println("\n***FATAL ERROR**: "+msg);
     }
     
-    private void printStartMessage(){
+    protected void printStartMessage(){
         
         System.out.println("Please login...");
     }
     
-    private void printLobbyMessage(){
+    protected void printLobbyMessage(){
         System.out.println("\nTo start a new game, bet some money...");
     }
     
-    private void printIngameMessage(){
+    protected void printIngameMessage(){
         System.out.println("\nYour turn...");
     }
     
-    private ClientAction startQuery(){
+    protected ClientAction startQuery(){
         while(true){
             System.out.print("> ");
             Scanner lsc = new Scanner(sc.nextLine());
@@ -129,7 +129,7 @@ public class TerminalUI implements UserInterface{
         }
     }
     
-    private ClientAction lobbyQuery(){
+    protected ClientAction lobbyQuery(){
         while(true){
             System.out.print("> ");
             Scanner lsc = new Scanner(sc.nextLine());
@@ -144,7 +144,7 @@ public class TerminalUI implements UserInterface{
         }
     }
     
-    private ClientAction ingameQuery(){
+    protected ClientAction ingameQuery(){
         while(true){
             System.out.print("> ");
             Scanner lsc = new Scanner(sc.nextLine());
@@ -176,11 +176,11 @@ public class TerminalUI implements UserInterface{
     }
     
     
-    private void printDiceList(DiceValue[] dl){
+    protected void printDiceList(DiceValue[] dl){
         System.out.println(Arrays.toString(dl));
     }
     
-    private void printDiceIndex(byte[] di){
+    protected void printDiceIndex(byte[] di){
         System.out.println(Arrays.toString(di));
     }
 

@@ -32,6 +32,11 @@ public class PlayerGame {
         }        
     }
     
+    public void setDice(DiceValue[] diceArray){
+        System.arraycopy(diceArray, 0, this.diceArray, 0, diceNum);
+    }
+    
+    
     public void take(byte[] indices){
         if(!legalTake(indices)){
             return;
@@ -116,6 +121,10 @@ public class PlayerGame {
         }
         if (isSix && isFive && isFour) return total_sum-15;
         else return 0;
+    }
+    
+    public void setGems(int gems){
+        this.gems = gems;
     }
 
     public void addGems(int inc){
