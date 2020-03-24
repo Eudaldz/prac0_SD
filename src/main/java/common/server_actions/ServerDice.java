@@ -25,6 +25,22 @@ public class ServerDice extends ServerAction{
     }
     
     public String toString(){
-        return super.toString()+" "+id+Arrays.toString(diceList);
+        return super.toString()+" "+id+ " "+Arrays.toString(diceList);
+    }
+    
+    @Override
+    public String protocolPrint(){
+        return super.toString()+" "+id+diceListToString();
+    }
+    
+    private String diceListToString(){
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < diceList.length; i++){
+            sb.append(" ");
+            sb.append("\'");
+            sb.append(diceList[i].toString());
+            sb.append("\'" );
+        }
+        return sb.toString();
     }
 }

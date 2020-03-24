@@ -24,6 +24,25 @@ public class ServerTake extends ServerAction{
     }
     
     public String toString(){
-        return super.toString()+" "+id+Arrays.toString(diceIndexList);
+        return super.toString()+" "+id+ " "+Arrays.toString(diceIndexList);
+    }
+    
+    @Override
+    public String protocolPrint(){
+        return super.toString()+ " "+id + " "+diceListToString();
+    }
+    
+    private String diceListToString(){
+        StringBuilder sb = new StringBuilder();
+        sb.append(byteString((byte)diceIndexList.length));
+        for(int i = 0; i < diceIndexList.length; i++){
+            sb.append(" ");
+            sb.append(byteString(diceIndexList[i]));
+        }
+        return sb.toString();
+    }
+    
+    private String byteString(byte b){
+        return "0x"+String.format("%02x", b);
     }
 }

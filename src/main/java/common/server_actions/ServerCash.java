@@ -23,4 +23,9 @@ public class ServerCash extends ServerAction{
     public String toString(){
         return super.toString()+" "+cash;
     }
+    
+    @Override
+    public String protocolPrint(){
+        return super.toString()+" "+cash;
+    }
 }

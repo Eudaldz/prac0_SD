@@ -10,4 +10,8 @@ public abstract class ClientAction{
     public String toString(){
         return command.toString();
     }
+    
+    public String protocolPrint(){
+        return command.toString();
+    }
 }

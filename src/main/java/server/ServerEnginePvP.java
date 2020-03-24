@@ -9,6 +9,7 @@ import common.server_actions.*;
 import common.client_actions.*;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Random;
 import java.util.logging.FileHandler;
@@ -39,8 +40,7 @@ public class ServerEnginePvP implements Runnable {
     private final static int CLIENT1_TURN = 1;
     private final static int CLIENT2_TURN = 2;
 
-    private Logger logger;
-    private FileHandler fh;
+    private FileWriter logger;
 
     private Random rand = new Random();
 
@@ -55,14 +55,21 @@ public class ServerEnginePvP implements Runnable {
 
     @Override
     public void run(){
-        run_game();
-        close_comms();
+        try{
+            loggerConfig();
+            run_game();
+            close_comms();
+        }catch(Exception e){
+            e.printStackTrace();
+            close_comms();
+        }
     }
 
     private void close_comms(){
         try{
             ci1.close();
             ci2.close();
+            logger.close();
         }catch(IOException e){}
     }
 
@@ -269,14 +276,16 @@ public class ServerEnginePvP implements Runnable {
     private void sendErrorMessageC1(String msg){
         try{
             ci1.sendErrorMessage(new ProtocolErrorMessage(msg));
-            logger.info(msg);
+            logger.write("S->C1: ERRO "+msg+"\n");
+            logger.flush();
         }catch(IOException e2){}
     }
 
     private void sendErrorMessageC2(String msg){
         try{
             ci2.sendErrorMessage(new ProtocolErrorMessage(msg));
-            logger.info(msg);
+            logger.write("S->C2: ERRO "+msg+"\n");
+            logger.flush();
         }catch(IOException e2){}
     }
 
@@ -284,8 +293,9 @@ public class ServerEnginePvP implements Runnable {
         System.out.println("Waiting action from client...");
         try {
             ClientAction ca = ci1.recieveClientAction();
-            //logger.info(ca.toString());
-            System.out.println(ca + " from "+client1Address);
+            logger.write("C1: "+ca.protocolPrint()+"\n");
+            logger.flush();
+            //System.out.println(ca + " from "+client1Address);
             return ca;
         } catch (IOException e) {
             System.out.println("Communication failed");
@@ -301,8 +311,9 @@ public class ServerEnginePvP implements Runnable {
         System.out.println("Waiting action from client...");
         try {
             ClientAction ca = ci2.recieveClientAction();
-            //logger.info(ca.toString());
-            System.out.println(ca + " from "+client2Address);
+            logger.write("C2: "+ca.protocolPrint()+"\n");
+            logger.flush();
+            //System.out.println(ca + " from "+client2Address);
             return ca;
         } catch (IOException e) {
             System.out.println("Communication failed");
@@ -323,8 +334,8 @@ public class ServerEnginePvP implements Runnable {
     private boolean sendActionC1(ServerAction sa){
         try {
             ci1.sendServerAction(sa);
-            //logger.info(sa.toString());
-            System.out.println(sa + " to "+client1Address);
+            logger.write("S->C1: "+sa.protocolPrint()+"\n");
+            logger.flush();
             return true;
         } catch (IOException e) {
             sendErrorMessageC1("Communication failed, could not send action");
@@ -335,30 +346,21 @@ public class ServerEnginePvP implements Runnable {
     private boolean sendActionC2(ServerAction sa){
         try {
             ci2.sendServerAction(sa);
-            //logger.info(sa.toString());
-            System.out.println(sa + " to "+client2Address);
+            logger.write("S->C2: "+sa.protocolPrint()+"\n");
+            logger.flush();
             return true;
         } catch (IOException e) {
             sendErrorMessageC2("Communication failed, could not send action");
             return false;
         }
     }
-    private void loggerConfig(){
-        logger = Logger.getLogger("myLog");
-        String basePath = new File("src/main/Server"+Thread.currentThread().getName()+".log").getAbsolutePath();
-
-        try {
-            // This block configure the logger with handler and formatter
-            fh = new FileHandler(basePath);
-            logger.addHandler(fh);
-            SimpleFormatter formatter = new SimpleFormatter();
-            fh.setFormatter(formatter);
-
-            logger.setUseParentHandlers(false);
-        } catch (SecurityException e) {
+    private boolean loggerConfig(){
+        try{
+            logger = new FileWriter(Thread.currentThread().getName()+".log", false);
+        }catch(IOException e){
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            return false;
         }
+        return true;
     }
 }

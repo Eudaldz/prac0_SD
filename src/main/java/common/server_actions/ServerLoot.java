@@ -23,4 +23,9 @@ public class ServerLoot extends ServerAction{
     public String toString(){
         return super.toString()+" "+coins;
     }
+    
+    @Override
+    public String protocolPrint(){
+        return super.toString()+" "+coins;
+    }
 }

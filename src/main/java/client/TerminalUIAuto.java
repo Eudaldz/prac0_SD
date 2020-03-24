@@ -45,17 +45,13 @@ public class TerminalUIAuto extends TerminalUI{
     
     @Override
     protected ClientAction ingameQuery(){
-        Scanner sc = new Scanner(System.in);
-        sc.nextLine();
         if(client.shouldPlayerPass()){
-            System.out.println("PASS");
             return new ClientPass(currentId);
             
         }else{
             byte[] indx = client.takePlayerAuto();
             client.take(indx);
             for(int i = 0; i < indx.length; i++)indx[i]++;
-            System.out.println("TAKE");
             this.printDiceIndex(indx);
             return new ClientTake(currentId, indx);
         }

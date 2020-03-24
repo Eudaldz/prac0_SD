@@ -84,7 +84,9 @@ class Server{
                 System.out.println("Accepted connection with: "+socket.getInetAddress());
                 try{
                     createNewGame1(socket);
-                }catch(Exception e){}
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
             }
 
         }catch (IOException ex) {

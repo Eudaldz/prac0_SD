@@ -24,4 +24,13 @@ public class ServerPoints extends ServerAction{
     public String toString(){
         return super.toString()+" "+id+" "+points;
     }
+    
+    @Override
+    public String protocolPrint(){
+        return super.toString()+" "+id+" "+ byteString((byte)points);
+    }
+    
+    private String byteString(byte b){
+        return "0x"+String.format("%02x", b);
+    }
 }

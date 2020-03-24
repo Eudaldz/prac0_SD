@@ -24,7 +24,6 @@ public class PlayerGame {
      * We reroll those dices that are not yet reserved.
      */
     public void reroll(){
-        System.out.println("REROLL: "+Arrays.toString(taken));
         for(int i = 0; i < diceNum; i++){
             if(!taken[i]){
                 diceArray[i] = randomDice();

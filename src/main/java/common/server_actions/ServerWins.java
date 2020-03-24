@@ -25,6 +25,11 @@ public class ServerWins extends ServerAction{
     }
     
     public String toString(){
-        return super.toString()+" "+value;
+        return super.toString()+" \'"+value+"\'";
+    }
+    
+    @Override
+    public String protocolPrint(){
+        return super.toString()+" \'"+value+"\'";
     }
 }

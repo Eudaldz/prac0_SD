@@ -23,4 +23,9 @@ public class ServerPass extends ServerAction{
     public String toString(){
         return super.toString()+" "+id;
     }
+    
+    @Override
+    public String protocolPrint(){
+        return super.toString()+" "+id;
+    }
 }

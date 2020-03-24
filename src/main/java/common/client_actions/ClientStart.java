@@ -18,4 +18,9 @@ public class ClientStart extends ClientAction{
     public String toString(){
         return super.toString()+" "+id;
     }
+    
+    @Override
+    public String protocolPrint(){
+        return super.toString()+" "+id;
+    }
 }

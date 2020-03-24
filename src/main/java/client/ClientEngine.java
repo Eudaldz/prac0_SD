@@ -245,8 +245,6 @@ public class ClientEngine{
     }
     
     private static boolean checkLegalMove(DiceValue[] roll, boolean[] taken){
-        System.out.println(Arrays.toString(taken));
-        System.out.println(Arrays.toString(roll));
         boolean[] step = new boolean[]{false, false, false, false};
         for(int i = 0; i < 5; i++){
             if(taken[i]){
@@ -299,11 +297,4 @@ public class ClientEngine{
         }
         return null;
     }
-    
-    public static void main(String[] args){
-        DiceValue[] roll = new DiceValue[]{DiceValue.One, DiceValue.Two, DiceValue.Five, DiceValue.Five, DiceValue.Four};
-        boolean[] taken = new boolean[]{false, false, false, true, false};
-        System.out.println(ClientEngine.checkLegalMove(roll, taken));
-    }
-    
 }

@@ -11,7 +11,9 @@ import common.server_actions.*;
 import common.client_actions.*;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.logging.FileHandler;
@@ -37,26 +39,31 @@ public class ServerEngine implements Runnable {
 
     private Random rand = new Random();
 
-    private Logger logger;
-    private FileHandler fh;
+    private FileWriter logger;
 
     public ServerEngine(CommunicationInterface ci, String clientAddress){
         this.ci = ci;
         this.clientGame = new PlayerGame();//CLIENT
         this.serverGame = new PlayerGame();//CLIENT OR SERVER
         this.clientAddress = clientAddress;
-        loggerConfig();//Initializes logger and filehandler
     }
     
     @Override
     public void run(){
-        run_game();
-        close_comms();
+        try{
+            loggerConfig();
+            run_game();
+            close_comms();
+        }catch(Exception e){
+            e.printStackTrace();
+            close_comms();
+        }
     }
     
     private void close_comms(){
         try{
             ci.close();
+            logger.close();
         }catch(IOException e){}
     }
  
@@ -228,7 +235,8 @@ public class ServerEngine implements Runnable {
     private void sendErrorMessage(String msg){
         try{
             ci.sendErrorMessage(new ProtocolErrorMessage(msg));
-            logger.info(msg);
+            logger.write("S: ERRO "+msg+"\n");
+            logger.flush();
         }catch(IOException e2){}
     }
 
@@ -236,8 +244,9 @@ public class ServerEngine implements Runnable {
         System.out.println("Waiting action from client...");
         try {
             ClientAction ca = ci.recieveClientAction();
-            //logger.info(ca.toString());
-            System.out.println(ca + " from "+clientAddress);
+            logger.write("C: "+ca.protocolPrint()+"\n");
+            logger.flush();
+            //System.out.println(ca + " from "+clientAddress);
             return ca;
         } catch (IOException e) {
             System.out.println("Communication failed");
@@ -252,8 +261,9 @@ public class ServerEngine implements Runnable {
     private boolean sendAction(ServerAction sa){
         try {
             ci.sendServerAction(sa);
-            //logger.info(sa.toString());
-            System.out.println(sa + " to "+clientAddress);
+            logger.write("S: "+sa.protocolPrint()+"\n");
+            logger.flush();
+            //System.out.println(sa + " to "+clientAddress);
             return true;
         } catch (IOException e) {
             sendErrorMessage("Communication failed, could not send action");
@@ -261,22 +271,14 @@ public class ServerEngine implements Runnable {
         }
     }
 
-    private void loggerConfig(){
-        logger = Logger.getLogger("myLog");
-        String basePath = new File(Thread.currentThread().getName()+".log").getAbsolutePath();
-
-        try {
-            // This block configure the logger with handler and formatter
-            fh = new FileHandler(basePath);
-            logger.addHandler(fh);
-            SimpleFormatter formatter = new SimpleFormatter();
-            fh.setFormatter(formatter);
-
-            logger.setUseParentHandlers(false);
-        } catch (SecurityException e) {
+    private boolean loggerConfig(){
+        try{
+            logger = new FileWriter(Thread.currentThread().getName()+".log", false);
+        }catch(IOException e){
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            return false;
         }
+        return true;
     }
+
 }
