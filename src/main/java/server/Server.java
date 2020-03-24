@@ -85,7 +85,7 @@ class Server{
                 try{
                     createNewGame1(socket);
                 }catch(Exception e){
-                    e.printStackTrace();
+                    System.out.println("Could not start game with: "+socket.getInetAddress());
                 }
             }
 
@@ -102,10 +102,12 @@ class Server{
                 System.out.println("Server is listening on port " + port);
                 Socket socket1 = serverSocket.accept();
                 Socket socket2 = serverSocket.accept();
-                System.out.println("Accepted connection with: "+socket1.getInetAddress() + " "+socket2.getInetAddress());
+                System.out.println("Accepted connection with: "+socket1.getInetAddress() + " and "+socket2.getInetAddress());
                 try{
                     createNewGame2(socket1, socket2);
-                }catch(Exception e){}
+                }catch(Exception e){
+                    System.out.println("Could not start game with: "+socket1.getInetAddress() + " and "+socket2.getInetAddress());
+                }
             }
 
         }catch (IOException ex) {
@@ -132,11 +134,9 @@ class Server{
     private void createNewGame1(Socket client)throws Exception{
         CommunicationInterface comms = initStream(client);
         if(comms != null){
-            System.out.println("Connection stablished with: "+client.getInetAddress());
             ServerEngine se =  new ServerEngine(comms, client.getInetAddress().toString());
-            se.run();
-            //Thread nt = new Thread(new ServerEngine(comms, mode, client.getInetAddress().toString()));
-            //nt.start();
+            Thread nt = new Thread(se);
+            nt.start();
         }
     }
     
@@ -144,11 +144,9 @@ class Server{
         CommunicationInterface comms1 = initStream(client1);
         CommunicationInterface comms2 = initStream(client2);
         if(comms1 != null && comms2 !=  null){
-            System.out.println("Connection stablished with: "+client1.getInetAddress() + " " + client2.getInetAddress());
             ServerEnginePvP se =  new ServerEnginePvP(comms1, comms2, client1.getInetAddress().toString(), client1.getInetAddress().toString());
-            se.run();
-            //Thread nt = new Thread(new ServerEngine(comms, mode, client.getInetAddress().toString()));
-            //nt.start();
+            Thread nt = new Thread(se);
+            nt.start();
         }
     }
 }

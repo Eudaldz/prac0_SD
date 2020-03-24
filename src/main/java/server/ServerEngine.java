@@ -51,11 +51,15 @@ public class ServerEngine implements Runnable {
     @Override
     public void run(){
         try{
+            System.out.println("Game started with "+clientAddress);
             loggerConfig();
             run_game();
+            System.out.println("Game ended with "+clientAddress);
             close_comms();
+            System.out.println("Connecion ended with "+clientAddress);
         }catch(Exception e){
             e.printStackTrace();
+            System.out.println("Game aborted with "+clientAddress);
             close_comms();
         }
     }
@@ -74,12 +78,9 @@ public class ServerEngine implements Runnable {
         String error_msg;
         boolean first_turn=false;
         int last_loser = 0; //0 -> tie | 1 ->client | 2 ->server
-
-        System.out.println("Begin game");
         int gameLoot = 0;
         
         main_loop: while (!END){
-            System.out.println("Begin game1");
             switch(sessionState){
                 case START:{
                     ca = receiveAction();
@@ -89,6 +90,7 @@ public class ServerEngine implements Runnable {
                         continue main_loop;
                     }
                     CLIENT_ID = ((ClientStart)ca).id;
+                    if(CLIENT_ID == 0)SERVER_ID = 1;
                     
                     if (!sendAction(new ServerCash(clientGame.getGems()))) {
                         END = true;
@@ -180,6 +182,9 @@ public class ServerEngine implements Runnable {
                             clientGame.take(take);
                             clientGame.reroll();
                             if(!sendAction(new ServerDice(CLIENT_ID,clientGame.getDiceValues()))) {END=true;break main_loop;}
+                        }else if(ca.command == ClientCommand.Exit){
+                            END = true;
+                            break main_loop;
                         }else{
                             sendErrorMessage("Expected PASS or TAKE command");
                             continue main_loop;
@@ -241,7 +246,6 @@ public class ServerEngine implements Runnable {
     }
 
     private ClientAction receiveAction(){
-        System.out.println("Waiting action from client...");
         try {
             ClientAction ca = ci.recieveClientAction();
             logger.write("C: "+ca.protocolPrint()+"\n");
@@ -249,7 +253,7 @@ public class ServerEngine implements Runnable {
             //System.out.println(ca + " from "+clientAddress);
             return ca;
         } catch (IOException e) {
-            System.out.println("Communication failed");
+            e.printStackTrace();
         } catch (ProtocolException e) {
             sendErrorMessage(e.getMessage());
         } catch (ProtocolErrorMessage e) {

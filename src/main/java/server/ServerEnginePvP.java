@@ -56,10 +56,14 @@ public class ServerEnginePvP implements Runnable {
     @Override
     public void run(){
         try{
+            System.out.println("Game started with "+client1Address + " and "+client2Address);
             loggerConfig();
             run_game();
+            System.out.println("Game ended with "+client1Address + " and "+client2Address);
             close_comms();
+            System.out.println("Connection ended with "+client1Address + " and "+client2Address);
         }catch(Exception e){
+            System.out.println("Game aborted with "+client1Address + " and "+client2Address);
             e.printStackTrace();
             close_comms();
         }
@@ -81,30 +85,33 @@ public class ServerEnginePvP implements Runnable {
         int first_turn = 0;//1 --> CLIENT_1 starts | 2 --> CLIENT_2 starts
         boolean current_turn=false;//false --> CLIENT_1 turn | true --> CLIENT_2 turn
 
-        System.out.println("Begin game");
         main_loop : while (!END){
             switch(sessionState){
                 case START:{
-                    System.out.println("START STATE");
                     ca1 = receiveActionC1();
-                    System.out.println("Start recieved from 1");
                     ca2 = receiveActionC2();
-                    System.out.println("Start recieved from 2");
                     if (ca1 == null) {END = true;break main_loop;}
                     if (ca2 == null) {END = true;break main_loop;}
                     
                     if(ca1.command == ClientCommand.Start && ca2.command == ClientCommand.Start){
                         CLIENT_1_ID=((ClientStart)ca1).id;
                         CLIENT_2_ID=((ClientStart)ca2).id;
+                        if(CLIENT_1_ID == CLIENT_2_ID){
+                            sendErrorMessageBoth("ID already taken");
+                            continue main_loop;
+                        }
                         if (!sendActionC1(new ServerCash(player1game.getGems()))) {END = true;break main_loop;}
                         if (!sendActionC2(new ServerCash(player2game.getGems()))) {END = true;break main_loop;}
                         sessionState = LOBBY;
                     
                     }else if(ca1.command == ClientCommand.Exit || ca2.command == ClientCommand.Exit){
-                        sendErrorMessageBoth("Game terminated");
+                        if(ca1.command == ClientCommand.Exit && ca2.command != ClientCommand.Exit){
+                            sendErrorMessageC2("Game terminated");;
+                        }else if(ca1.command != ClientCommand.Exit && ca2.command == ClientCommand.Exit){
+                            sendErrorMessageC1("Game terminated");
+                        }
                         END = true;
                         break main_loop;
-                    
                     }else{
                         sendErrorMessageBoth("Invalid response from certain client");
                         continue main_loop;
@@ -139,14 +146,17 @@ public class ServerEnginePvP implements Runnable {
                         }
                         
                     }else if(ca1.command == ClientCommand.Exit || ca2.command == ClientCommand.Exit){
-                        sendErrorMessageBoth("Game terminated");
+                        if(ca1.command == ClientCommand.Exit && ca2.command != ClientCommand.Exit){
+                            sendErrorMessageC2("Game terminated");;
+                        }else if(ca1.command != ClientCommand.Exit && ca2.command == ClientCommand.Exit){
+                            sendErrorMessageC1("Game terminated");
+                        }
                         END = true;
                         break main_loop;
                     }else{
                         sendErrorMessageBoth("Invalid response from certain client");
                         continue main_loop;
                     }
-                    
                     break;
                 }
                 case PLAY:{
@@ -179,6 +189,11 @@ public class ServerEnginePvP implements Runnable {
                             player1game.take(take);
                             player1game.reroll();
                             if(!sendActionBoth(new ServerDice(CLIENT_1_ID,player1game.getDiceValues()))) {END=true;break main_loop;}//We send DICE to both players
+                        
+                        }else if(ca1.command == ClientCommand.Exit){
+                            sendErrorMessageC2("Game terminated");
+                            END = true;
+                            break main_loop;
                         }else{
                             sendErrorMessageBoth("Invalid response from certain client");
                             continue main_loop;
@@ -190,7 +205,6 @@ public class ServerEnginePvP implements Runnable {
                         sessionState = CLIENT_2_PLAY;
                     }else{
                         sessionState = GAME_END;
-                        
                     }
                     break;
                 }
@@ -210,6 +224,10 @@ public class ServerEnginePvP implements Runnable {
                             player2game.take(take);
                             player2game.reroll();
                             if(!sendActionBoth(new ServerDice(CLIENT_2_ID,player2game.getDiceValues()))) {END=true;break main_loop;}//We send DICE to both players
+                        }else if(ca2.command == ClientCommand.Exit){
+                            sendErrorMessageC1("Game terminated");
+                            END = true;
+                            break main_loop;
                         }else{
                             sendErrorMessageBoth("Invalid response from certain client");
                             continue main_loop;
@@ -290,7 +308,6 @@ public class ServerEnginePvP implements Runnable {
     }
 
     private ClientAction receiveActionC1(){
-        System.out.println("Waiting action from client...");
         try {
             ClientAction ca = ci1.recieveClientAction();
             logger.write("C1: "+ca.protocolPrint()+"\n");
@@ -308,7 +325,6 @@ public class ServerEnginePvP implements Runnable {
     }
 
     private ClientAction receiveActionC2(){
-        System.out.println("Waiting action from client...");
         try {
             ClientAction ca = ci2.recieveClientAction();
             logger.write("C2: "+ca.protocolPrint()+"\n");

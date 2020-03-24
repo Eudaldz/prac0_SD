@@ -72,7 +72,7 @@ public class ClientEngine{
                     if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break main_loop;}
                     ServerAction sa = recieveAction();
                     if(sa == null){END = true; break main_loop;}
-                    if(sa == errorSignal){continue main_loop;}
+                    if(sa == errorSignal){break main_loop;}
                     if(sa.command != ServerCommand.Cash){sendErrorMessage("Expected CASH command."); END = true; break main_loop;}
                     gems = ((ServerCash)sa).cash;
                     ui.showServerAction(sa, UserState.START);
@@ -95,7 +95,7 @@ public class ClientEngine{
                     if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break main_loop;}
                     ServerAction sa = recieveAction();
                     if(sa == null){END = true; break main_loop;}
-                    if(sa == errorSignal){continue main_loop;}
+                    if(sa == errorSignal){break main_loop;}
                     if(sa.command != ServerCommand.Loot){sendErrorMessage("Expected LOOT command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.LOBBY);
                     sessionState = PLAY;
@@ -105,7 +105,7 @@ public class ClientEngine{
                 case PLAY:{
                     ServerAction sa = recieveAction();
                     if(sa == null){END = true; break main_loop;}
-                    if(sa == errorSignal){continue main_loop;}
+                    if(sa == errorSignal){break main_loop;}
                     if(sa.command != ServerCommand.Play){sendErrorMessage("Expected PLAY command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.INGAME);
                     switch(((ServerPlay)sa).value){
@@ -128,7 +128,7 @@ public class ClientEngine{
                     
                     ServerAction sa = recieveAction();
                     if(sa == null){END = true; break main_loop;}
-                    if(sa == errorSignal){continue main_loop;}
+                    if(sa == errorSignal){break main_loop;}
                     if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.INGAME);
                     diceRoll = ((ServerDice)sa).diceList;
@@ -159,7 +159,7 @@ public class ClientEngine{
                         }
                         sa = recieveAction();
                         if(sa == null){END = true; break main_loop;}
-                        if(sa == errorSignal){continue main_loop;}
+                        if(sa == errorSignal){break main_loop;}
                         if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break main_loop;}
                         diceRoll = ((ServerDice)sa).diceList;
                         ui.showServerAction(sa, UserState.INGAME);
@@ -169,7 +169,7 @@ public class ClientEngine{
                     }
                     sa = recieveAction();
                     if(sa == null){END = true; break main_loop;}
-                    if(sa == errorSignal){continue main_loop;}
+                    if(sa == errorSignal){break main_loop;}
                     if(sa.command != ServerCommand.Points){sendErrorMessage("Expected PNTS command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.INGAME);
                     if(firstPlayer == CLIENT){
@@ -188,14 +188,14 @@ public class ClientEngine{
                     
                     ServerAction sa = recieveAction();
                     if(sa == null){END = true; break main_loop;}
-                    if(sa == errorSignal){continue main_loop;}
+                    if(sa == errorSignal){break main_loop;}
                     if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.INGAME);
                     diceRoll = ((ServerDice)sa).diceList;
                     play_loop: while(turnRound < 2){
                         sa = recieveAction(); 
                         if(sa == null){END = true; break main_loop;}
-                        if(sa == errorSignal){continue main_loop;}
+                        if(sa == errorSignal){break main_loop;}
                         if(sa.command != ServerCommand.Take && sa.command != ServerCommand.Pass){sendErrorMessage("Expected TAKE or PASS command."); END = true; break main_loop;}
                         ui.showServerAction(sa, UserState.INGAME);
                         if(sa.command == ServerCommand.Pass){
@@ -203,14 +203,14 @@ public class ClientEngine{
                         }
                         sa = recieveAction();
                         if(sa == null){END = true; break main_loop;}
-                        if(sa == errorSignal){continue main_loop;}
+                        if(sa == errorSignal){break main_loop;}
                         if(sa.command != ServerCommand.Dice){sendErrorMessage("Expected DICE command."); END = true; break main_loop;}
                         ui.showServerAction(sa, UserState.INGAME);
                         turnRound++;
                     }
                     sa = recieveAction();
                     if(sa == null){END = true; break main_loop;}
-                    if(sa == errorSignal){continue main_loop;}
+                    if(sa == errorSignal){break main_loop;}
                     if(sa.command != ServerCommand.Points){sendErrorMessage("Expected PNTS command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.INGAME);
                     if(firstPlayer == SERVER){
@@ -225,14 +225,14 @@ public class ClientEngine{
                 case GAME_END:{
                     ServerAction sa = recieveAction();
                     if(sa == null){END = true; break;}
-                    if(sa == errorSignal){continue main_loop;}
-                    if(sa.command != ServerCommand.Wins){sendErrorMessage("Expected WINS command."); END = true; break;}
+                    if(sa == errorSignal){break main_loop;}
+                    if(sa.command != ServerCommand.Wins){sendErrorMessage("Expected WINS command."); END = true; break main_loop;}
                     ui.showServerAction(sa, UserState.INGAME);
                     
                     sa = recieveAction();
                     if(sa == null){END = true; break;}
-                    if(sa == errorSignal){continue main_loop;}
-                    if(sa.command != ServerCommand.Cash){sendErrorMessage("Expected CASH command."); END = true; break;}
+                    if(sa == errorSignal){break main_loop;}
+                    if(sa.command != ServerCommand.Cash){sendErrorMessage("Expected CASH command."); END = true; break main_loop;}
                     gems = ((ServerCash)sa).cash;
                     ui.showServerAction(sa, UserState.INGAME);
                     
@@ -275,7 +275,6 @@ public class ClientEngine{
             return true;
         }catch(IOException e){
             ui.showInternalError("Communication with server failed");
-            e.printStackTrace();
             return false;
         }
     }
