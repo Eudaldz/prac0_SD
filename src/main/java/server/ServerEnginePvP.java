@@ -9,6 +9,9 @@ import common.server_actions.*;
 import common.client_actions.*;
 import java.io.IOException;
 import java.util.Random;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class ServerEnginePvP implements Runnable {
 
@@ -31,6 +34,9 @@ public class ServerEnginePvP implements Runnable {
     private final static int PLAY = 2;
     private final static int CLIENT_1_PLAY = 3;
     private final static int CLIENT_2_PLAY = 4;
+
+    private Logger logger;
+    private FileHandler fh;
 
     private Random rand = new Random();
 
@@ -254,11 +260,14 @@ public class ServerEnginePvP implements Runnable {
     private void sendErrorMessageC1(String msg){
         try{
             ci1.sendErrorMessage(new ProtocolErrorMessage(msg));
+            logger.info(msg);
         }catch(IOException e2){}
     }
+
     private void sendErrorMessageC2(String msg){
         try{
             ci2.sendErrorMessage(new ProtocolErrorMessage(msg));
+            logger.info(msg);
         }catch(IOException e2){}
     }
 
@@ -266,6 +275,7 @@ public class ServerEnginePvP implements Runnable {
         System.out.println("Waiting action from client...");
         try {
             ClientAction ca = ci1.recieveClientAction();
+            logger.info(ca.toString());
             System.out.println(ca + " from "+client1Address);
             return ca;
         } catch (IOException e) {
@@ -282,6 +292,7 @@ public class ServerEnginePvP implements Runnable {
         System.out.println("Waiting action from client...");
         try {
             ClientAction ca = ci2.recieveClientAction();
+            logger.info(ca.toString());
             System.out.println(ca + " from "+client2Address);
             return ca;
         } catch (IOException e) {
@@ -297,6 +308,7 @@ public class ServerEnginePvP implements Runnable {
     private boolean sendActionC1(ServerAction sa){
         try {
             ci1.sendServerAction(sa);
+            logger.info(sa.toString());
             System.out.println(sa + " to "+client1Address);
             return true;
         } catch (IOException e) {
@@ -308,11 +320,28 @@ public class ServerEnginePvP implements Runnable {
     private boolean sendActionC2(ServerAction sa){
         try {
             ci2.sendServerAction(sa);
+            logger.info(sa.toString());
             System.out.println(sa + " to "+client2Address);
             return true;
         } catch (IOException e) {
             sendErrorMessageC2("Communication failed, could not send action");
             return false;
+        }
+    }
+    private void loggerConfig(){
+        logger = Logger.getLogger("myLog");
+        try {
+            // This block configure the logger with handler and formatter
+            fh = new FileHandler("./Server"+Thread.currentThread().getName()+".log");
+            logger.addHandler(fh);
+            SimpleFormatter formatter = new SimpleFormatter();
+            fh.setFormatter(formatter);
+
+            logger.setUseParentHandlers(false);
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

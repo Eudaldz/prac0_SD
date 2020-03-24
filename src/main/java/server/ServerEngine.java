@@ -9,9 +9,14 @@ import common.ProtocolErrorMessage;
 import common.ProtocolException;
 import common.server_actions.*;
 import common.client_actions.*;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class ServerEngine implements Runnable {
     
@@ -24,35 +29,26 @@ public class ServerEngine implements Runnable {
     private String clientAddress;
 
     private final static int START = 0;
+    private final static int LOBBY = 1;
     private final static int PLAY = 2;
     private final static int CLIENT_PLAY = 3;
     private final static int SERVER_PLAY = 4;
-    private final static int TURN_END = 6;
     private final static int GAME_END = 5;
-    private final static int BETT = 7;
 
-    private final static int SERVER_PLAY_START = 0;
-    private final static int SERVER_PLAY_TAKE = 1;
-    private final static int SERVER_PLAY_PASS = 2;
-    private final static int SERVER_PLAY_END_TURN = 3;
-
-    private final static int CLIENT_TAKE = 0;
-    private final static int CLIENT_PASS = 1;
-    private final static int CLIENT_PLAY_LOBBY = 2;
-    private final static int CLIENT_END = 3;
-    
     private final static boolean SERVER_TURN = true;
     private final static boolean CLIENT_TURN = false;
 
-
     private Random rand = new Random();
 
+    private Logger logger;
+    private FileHandler fh;
 
     public ServerEngine(CommunicationInterface ci, int mode, String clientAddress){
         this.ci = ci;
         this.clientGame = new PlayerGame();//CLIENT
         this.serverGame = new PlayerGame();//CLIENT OR SERVER
         this.clientAddress = clientAddress;
+        loggerConfig();//Initializes logger and filehandler
     }
     
     @Override
@@ -70,9 +66,10 @@ public class ServerEngine implements Runnable {
     private void run_game() {
         boolean END = false;
         int sessionState = START;
-        int SERVER_ID = 0;
-        int CLIENT_ID = 0;
+        int SERVER_ID = 0,CLIENT_ID=0;
+        String error_msg;
         boolean first_turn=false;
+
         System.out.println("Begin game");
         int gameLoot = 0;
         
@@ -80,7 +77,7 @@ public class ServerEngine implements Runnable {
             System.out.println("Begin game1");
             switch(sessionState){
                 case START:{
-                    ca = receiveAction(); // TODO S'ha de capturar l'ID (per a la segona fase)
+                    ca = receiveAction();
                     if (ca == null){END = true; break main_loop;}
                     if (ca.command != ClientCommand.Start) {
                         sendErrorMessage("Expected STRT command");
@@ -92,10 +89,10 @@ public class ServerEngine implements Runnable {
                         END = true;
                         break main_loop;
                     }
-                    sessionState = BETT;
+                    sessionState = LOBBY;
                     break;
                 }
-                case BETT:{
+                case LOBBY:{
                     ca = receiveAction();
                     if (ca == null){END = true; break main_loop;}
                     if (ca.command.equals(ClientCommand.Bett)){
@@ -118,6 +115,7 @@ public class ServerEngine implements Runnable {
                         break main_loop;
                     }
                     else{
+
                         sendErrorMessage("Expected BETT or EXIT command");
                         continue main_loop;
                     }
@@ -205,7 +203,7 @@ public class ServerEngine implements Runnable {
                     if(!sendAction(new ServerWins((byte) winner))){END=true;break main_loop;}
                     if(!sendAction(new ServerCash(clientGame.getGems()))){END=true;break main_loop;}
 
-                    sessionState = BETT;
+                    sessionState = LOBBY;
                     break;
                 }
             }
@@ -231,6 +229,7 @@ public class ServerEngine implements Runnable {
     private void sendErrorMessage(String msg){
         try{
             ci.sendErrorMessage(new ProtocolErrorMessage(msg));
+            logger.info(msg);
         }catch(IOException e2){}
     }
 
@@ -238,6 +237,7 @@ public class ServerEngine implements Runnable {
         System.out.println("Waiting action from client...");
         try {
             ClientAction ca = ci.recieveClientAction();
+            logger.info(ca.toString());
             System.out.println(ca + " from "+clientAddress);
             return ca;
         } catch (IOException e) {
@@ -253,11 +253,31 @@ public class ServerEngine implements Runnable {
     private boolean sendAction(ServerAction sa){
         try {
             ci.sendServerAction(sa);
+            logger.info(sa.toString());
             System.out.println(sa + " to "+clientAddress);
             return true;
         } catch (IOException e) {
             sendErrorMessage("Communication failed, could not send action");
             return false;
+        }
+    }
+
+    private void loggerConfig(){
+        logger = Logger.getLogger("myLog");
+        String basePath = new File("src/main/Server"+Thread.currentThread().getName()+".log").getAbsolutePath();
+
+        try {
+            // This block configure the logger with handler and formatter
+            fh = new FileHandler(basePath);
+            logger.addHandler(fh);
+            SimpleFormatter formatter = new SimpleFormatter();
+            fh.setFormatter(formatter);
+
+            logger.setUseParentHandlers(false);
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
