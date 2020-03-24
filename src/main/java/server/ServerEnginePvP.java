@@ -11,6 +11,8 @@ import common.client_actions.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.Random;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
@@ -24,6 +26,8 @@ public class ServerEnginePvP implements Runnable {
     private ClientAction ca1;
     private ClientAction ca2;
     private String client1Address,client2Address;
+    private Socket socket1;
+    private Socket socket2;
 
     private final static int CLIENT_1 = 0;
     private final static int CLIENT_2 = 1;
@@ -44,9 +48,11 @@ public class ServerEnginePvP implements Runnable {
 
     private Random rand = new Random();
 
-    public ServerEnginePvP(CommunicationInterface ci1, CommunicationInterface ci2, String client1Address, String client2Address){
-        this.ci1 = ci1;//Communication interface for player 1.
-        this.ci2 = ci2;//Communication interface for player 2.
+    public ServerEnginePvP(Socket socket1, Socket socket2, String client1Address, String client2Address)throws IOException{
+        this.socket1 = socket1;
+        this.socket2 = socket2;
+        this.ci1 = new EloisProtocolComms(socket1.getInputStream(), socket1.getOutputStream());
+        this.ci2 = new EloisProtocolComms(socket2.getInputStream(), socket2.getOutputStream());
         this.player1game = new PlayerGame();//PLAYER 1
         this.player2game = new PlayerGame();//PLAYER 2
         this.client1Address = client1Address;
@@ -309,11 +315,16 @@ public class ServerEnginePvP implements Runnable {
 
     private ClientAction receiveActionC1(){
         try {
-            ClientAction ca = ci1.recieveClientAction();
-            logger.write("C1: "+ca.protocolPrint()+"\n");
-            logger.flush();
-            //System.out.println(ca + " from "+client1Address);
-            return ca;
+            while(true){    
+                try{
+                    ClientAction ca = ci1.recieveClientAction();
+                    logger.write("C1: "+ca.protocolPrint()+"\n");
+                    logger.flush();
+                    return ca;
+                }catch(SocketTimeoutException e){
+                    if(!socket1.getInetAddress().isReachable(1000))return null;
+                } 
+            }
         } catch (IOException e) {
             System.out.println("Communication failed");
         } catch (ProtocolException e) {
@@ -326,11 +337,16 @@ public class ServerEnginePvP implements Runnable {
 
     private ClientAction receiveActionC2(){
         try {
-            ClientAction ca = ci2.recieveClientAction();
-            logger.write("C2: "+ca.protocolPrint()+"\n");
-            logger.flush();
-            //System.out.println(ca + " from "+client2Address);
-            return ca;
+            while(true){    
+                try{
+                    ClientAction ca = ci2.recieveClientAction();
+                    logger.write("C2: "+ca.protocolPrint()+"\n");
+                    logger.flush();
+                    return ca;
+                }catch(SocketTimeoutException e){
+                    if(!socket2.getInetAddress().isReachable(1000))return null;
+                } 
+            }
         } catch (IOException e) {
             System.out.println("Communication failed");
         } catch (ProtocolException e) {

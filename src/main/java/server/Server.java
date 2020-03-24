@@ -81,6 +81,7 @@ class Server{
             while(true){
                 System.out.println("Server is listening on port " + port);
                 Socket socket = serverSocket.accept();
+                socket.setSoTimeout(5000);
                 System.out.println("Accepted connection with: "+socket.getInetAddress());
                 try{
                     createNewGame1(socket);
@@ -102,6 +103,8 @@ class Server{
                 System.out.println("Server is listening on port " + port);
                 Socket socket1 = serverSocket.accept();
                 Socket socket2 = serverSocket.accept();
+                socket1.setSoTimeout(5000);
+                socket2.setSoTimeout(5000);
                 System.out.println("Accepted connection with: "+socket1.getInetAddress() + " and "+socket2.getInetAddress());
                 try{
                     createNewGame2(socket1, socket2);
@@ -116,15 +119,6 @@ class Server{
         }
     }
 
-    /**
-     *
-     * @param s
-     * @return
-     * @throws Exception
-     */
-    private CommunicationInterface initStream(Socket s)throws Exception{
-        return new EloisProtocolComms(s.getInputStream(), s.getOutputStream());
-    }
 
     /**
      *
@@ -132,21 +126,14 @@ class Server{
      * @throws Exception
      */
     private void createNewGame1(Socket client)throws Exception{
-        CommunicationInterface comms = initStream(client);
-        if(comms != null){
-            ServerEngine se =  new ServerEngine(comms, client.getInetAddress().toString());
-            Thread nt = new Thread(se);
-            nt.start();
-        }
+        ServerEngine se =  new ServerEngine(client, client.getInetAddress().toString());
+        Thread nt = new Thread(se);
+        nt.start();
     }
     
     private void createNewGame2(Socket client1, Socket client2)throws Exception{
-        CommunicationInterface comms1 = initStream(client1);
-        CommunicationInterface comms2 = initStream(client2);
-        if(comms1 != null && comms2 !=  null){
-            ServerEnginePvP se =  new ServerEnginePvP(comms1, comms2, client1.getInetAddress().toString(), client1.getInetAddress().toString());
-            Thread nt = new Thread(se);
-            nt.start();
-        }
+        ServerEnginePvP se =  new ServerEnginePvP(client1, client2, client1.getInetAddress().toString(), client1.getInetAddress().toString());
+        Thread nt = new Thread(se);
+        nt.start();
     }
 }

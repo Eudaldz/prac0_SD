@@ -9,6 +9,7 @@ import common.client_actions.*;
 import common.server_actions.*;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.Arrays;
 
 
@@ -23,6 +24,7 @@ public class ClientEngine{
     
     ErrorAction errorSignal = new ErrorAction();
     
+    private Socket socket;
     private CommunicationInterface ci;
     private UserInterface ui;
     
@@ -38,8 +40,9 @@ public class ClientEngine{
     private final static int SERVER = 2;
     private final static int NULL = -1;
     
-    public ClientEngine(CommunicationInterface ci, UserInterface ui){
-        this.ci = ci;
+    public ClientEngine(Socket socket, UserInterface ui)throws IOException{
+        this.socket = socket;
+        this.ci = new EloisProtocolComms(socket.getInputStream(), socket.getOutputStream());
         this.ui = ui;
     }
     
@@ -271,6 +274,7 @@ public class ClientEngine{
     
     private boolean sendAction(ClientAction ca){
         try{
+            System.out.println("send "+ca);
             ci.sendClientAction(ca);
             return true;
         }catch(IOException e){
@@ -282,9 +286,14 @@ public class ClientEngine{
     private ServerAction recieveAction(){
         //System.out.println("Waiting action from client");
         try{
-            ServerAction sa = ci.recieveServerAction();
-            //System.out.println(sa + " from server");
-            return sa;
+            while(true){    
+                try{
+                    ServerAction sa = ci.recieveServerAction();
+                    return sa;
+                }catch(SocketTimeoutException e){
+                    if(!socket.getInetAddress().isReachable(1000))return null;
+                } 
+            }
         }catch(IOException e){
             ui.showInternalError("Communication with server failed");
         }catch(ProtocolErrorMessage e){

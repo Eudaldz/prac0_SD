@@ -30,33 +30,20 @@ public class Client{
         System.out.println(hostname);
         System.out.println(port);
         try(Socket socket = new Socket(hostname,port)){
-            CommunicationInterface comms = initStream(socket);
-            if(comms != null){
-                UserInterface ui;
-                if(mode == MANUAL_MODE){
-                    ui = new TerminalUI();
-                }else{
-                    ui = new TerminalUIAuto();
-                }
-                ClientEngine ce = new ClientEngine(comms, ui);
-                ce.run();
+            socket.setSoTimeout(5000);//5 second
+            UserInterface ui;
+            if(mode == MANUAL_MODE){
+                ui = new TerminalUI();
             }else{
-                System.out.println("Unable to open communication streams.");
+                ui = new TerminalUIAuto();
             }
-            
+            ClientEngine ce = new ClientEngine(socket, ui);
+            ce.run();
         }catch(UnknownHostException ex) {
             System.out.println("Server not found: " + ex.getMessage());
- 
         } catch(IOException ex) {
-            System.out.println("I/O error: " + ex.getMessage());
+            System.out.println("Unable to open communication:" + ex.getMessage());
         }
-    }
-    
-    private CommunicationInterface initStream(Socket s){
-        try{
-            return new EloisProtocolComms(s.getInputStream(), s.getOutputStream());
-        }catch(Exception e){}
-        return null;
     }
     
     

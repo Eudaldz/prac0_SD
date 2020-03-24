@@ -5,6 +5,7 @@ import client.Client;
 import client.UserState;
 import common.CommunicationInterface;
 import common.DiceValue;
+import common.EloisProtocolComms;
 import common.ProtocolErrorMessage;
 import common.ProtocolException;
 import common.server_actions.*;
@@ -14,6 +15,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.logging.FileHandler;
@@ -26,6 +29,7 @@ public class ServerEngine implements Runnable {
     private PlayerGame clientGame, serverGame;
     private ClientAction ca;
     private String clientAddress;
+    private Socket socket;
 
     private final static int START = 0;
     private final static int LOBBY = 1;
@@ -41,7 +45,9 @@ public class ServerEngine implements Runnable {
 
     private FileWriter logger;
 
-    public ServerEngine(CommunicationInterface ci, String clientAddress){
+    public ServerEngine(Socket socket, String clientAddress)throws IOException{
+        this.socket = socket;
+        this.ci = new EloisProtocolComms(socket.getInputStream(), socket.getOutputStream());
         this.ci = ci;
         this.clientGame = new PlayerGame();//CLIENT
         this.serverGame = new PlayerGame();//CLIENT OR SERVER
@@ -247,11 +253,16 @@ public class ServerEngine implements Runnable {
 
     private ClientAction receiveAction(){
         try {
-            ClientAction ca = ci.recieveClientAction();
-            logger.write("C: "+ca.protocolPrint()+"\n");
-            logger.flush();
-            //System.out.println(ca + " from "+clientAddress);
-            return ca;
+            while(true){    
+                try{
+                    ClientAction ca = ci.recieveClientAction();
+                    logger.write("C: "+ca.protocolPrint()+"\n");
+                    logger.flush();
+                    return ca;
+                }catch(SocketTimeoutException e){
+                    if(!socket.getInetAddress().isReachable(1000))return null;
+                } 
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ProtocolException e) {
