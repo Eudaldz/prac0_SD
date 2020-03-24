@@ -7,6 +7,8 @@ package server;
 import common.*;
 import common.server_actions.*;
 import common.client_actions.*;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 import java.util.logging.FileHandler;
@@ -330,9 +332,11 @@ public class ServerEnginePvP implements Runnable {
     }
     private void loggerConfig(){
         logger = Logger.getLogger("myLog");
+        String basePath = new File("src/main/Server"+Thread.currentThread().getName()+".log").getAbsolutePath();
+
         try {
             // This block configure the logger with handler and formatter
-            fh = new FileHandler("./Server"+Thread.currentThread().getName()+".log");
+            fh = new FileHandler(basePath);
             logger.addHandler(fh);
             SimpleFormatter formatter = new SimpleFormatter();
             fh.setFormatter(formatter);
