@@ -24,8 +24,6 @@ public class ServerEnginePvP implements Runnable {
     private ClientAction ca2;
     private String client1Address,client2Address;
 
-    private final static int ROUND_FEE = 1;
-
     private final static int CLIENT_1 = 0;
     private final static int CLIENT_2 = 1;
     private int CLIENT_1_ID=CLIENT_1;
@@ -36,13 +34,17 @@ public class ServerEnginePvP implements Runnable {
     private final static int PLAY = 2;
     private final static int CLIENT_1_PLAY = 3;
     private final static int CLIENT_2_PLAY = 4;
+    private final static int GAME_END = 5;
+    
+    private final static int CLIENT1_TURN = 1;
+    private final static int CLIENT2_TURN = 2;
 
     private Logger logger;
     private FileHandler fh;
 
     private Random rand = new Random();
 
-    public ServerEnginePvP(CommunicationInterface ci1, CommunicationInterface ci2, int mode, String client1Address, String client2Address){
+    public ServerEnginePvP(CommunicationInterface ci1, CommunicationInterface ci2, String client1Address, String client2Address){
         this.ci1 = ci1;//Communication interface for player 1.
         this.ci2 = ci2;//Communication interface for player 2.
         this.player1game = new PlayerGame();//PLAYER 1
@@ -67,9 +69,9 @@ public class ServerEnginePvP implements Runnable {
     private void run_game() {
         boolean END = false;
         int last_loser=0;//0 means tie or first game, 1 means CLIENT_1 lost the last game, 2 means CLIENT_2 lost the last game
-        int lobby_money=0;
+        int gameLoot = 0;
         int sessionState = START;
-        boolean first_turn=false;//false --> CLIENT_1 starts | true --> CLIENT_2 starts
+        int first_turn = 0;//1 --> CLIENT_1 starts | 2 --> CLIENT_2 starts
         boolean current_turn=false;//false --> CLIENT_1 turn | true --> CLIENT_2 turn
 
         System.out.println("Begin game");
@@ -78,23 +80,24 @@ public class ServerEnginePvP implements Runnable {
             switch(sessionState){
                 case START:{
                     ca1 = receiveActionC1();
-                    CLIENT_1_ID=((ClientStart)ca1).id;
-
                     if (ca1 == null) {END = true;break main_loop;}
                     if (ca1.command != ClientCommand.Start) {
                         sendErrorMessageC1("Expected STRT command");
                         END = true;
-                        break main_loop;
+                        continue main_loop;
                     }
-                    if (!sendActionC1(new ServerCash(player1game.getGems()))) {
-                        END = true;
-                        break main_loop;
-                    }
+                    CLIENT_1_ID=((ClientStart)ca1).id;
+                    
                     ca2 = receiveActionC2();
-                    CLIENT_2_ID=((ClientStart)ca2).id;
                     if (ca2 == null) {END = true;break main_loop;}
                     if (ca2.command != ClientCommand.Start) {
                         sendErrorMessageC2("Expected STRT command");
+                        END = true;
+                        continue main_loop;
+                    }
+                    CLIENT_2_ID=((ClientStart)ca2).id;
+                    
+                    if (!sendActionC1(new ServerCash(player1game.getGems()))) {
                         END = true;
                         break main_loop;
                     }
@@ -103,162 +106,162 @@ public class ServerEnginePvP implements Runnable {
                         break main_loop;
                     }
                     sessionState = LOBBY;
-                    break main_loop;
+                    break;
                 }
                 case LOBBY:{
                     ca1 = receiveActionC1();
-                    if (ca1 == null) END = true;
-                    if (ca1.command.equals(ClientCommand.Bett)){
-                        player1game.newGame();
-                        player1game.addGems(-ROUND_FEE);//We take 1 gem away.
-                        lobby_money+=ROUND_FEE;
-                    }
-                    else if (ca1.command.equals(ClientCommand.Exit)) {
-                        END = true;
-                        lobby_money=0;
-                        break main_loop;
-                    }
-                    else{
-                        sendErrorMessageC1("Expected BETT or EXIT command");
-                        END=true;
-                        break main_loop;
-                    }
                     ca2 = receiveActionC2();
-                    if (ca2 == null) END = true;
-                    if (ca2.command.equals(ClientCommand.Bett)){
+                    if (ca1 == null) {END = true; break main_loop;}
+                    if (ca2 == null) {END = true; break main_loop;}
+                    if (ca1.command == ClientCommand.Bett && ca2.command == ClientCommand.Bett){
+                        player1game.newGame();
                         player2game.newGame();
-                        player2game.addGems(-ROUND_FEE);//We take 1 gem away.
-                        lobby_money+=ROUND_FEE;
-                    }
-                    else if (ca2.command.equals(ClientCommand.Exit)) {
+                        if(player1game.hasGems() && player2game.hasGems()){
+                            gameLoot += 2;
+                            player1game.addGems(-1);
+                            player2game.addGems(-1);
+                            sessionState = PLAY;
+                            if( !sendActionBoth(new ServerLoot(gameLoot))){
+                                END = true;
+                                break main_loop;
+                            }
+                        }else{
+                            String c1msg = "Adversary has not enough gems";
+                            String c2msg = "Adversary has not enough gems";
+                            if(!player1game.hasGems())c1msg = "Not enough gems";
+                            if(!player2game.hasGems())c2msg = "Not enough gems";
+                            sendErrorMessageC1(c1msg);
+                            sendErrorMessageC2(c2msg);
+                            continue main_loop;
+                        }
+                        
+                    }else if(ca1.command == ClientCommand.Exit || ca2.command == ClientCommand.Exit){
+                        sendErrorMessageBoth("Game terminated");
                         END = true;
-                        lobby_money=0;
                         break main_loop;
+                    }else{
+                        sendErrorMessageBoth("Invalid response from certain client");
+                        continue main_loop;
                     }
-                    else{
-                        sendErrorMessageC2("Expected BETT or EXIT command");
-                        END=true;
-                        break;
-                    }
-                    //Case both ca1 and ca2 are BETT.
-                    if (!sendActionC1(new ServerLoot(player1game.getGems())) || !sendActionC2(new ServerLoot(player1game.getGems())) ) {
-                        END = true;
-                        break main_loop;
-                    }
-                    sessionState = PLAY;
-                    break main_loop;
+                    
+                    break;
                 }
                 case PLAY:{
-                    if (last_loser == 0) first_turn = rand.nextBoolean();
-                    else if(last_loser == 1) first_turn=false;
-                    else first_turn=true;
+                    first_turn = rand.nextInt(2)+1;
+                    if(last_loser == 1) first_turn=1;
+                    else if (last_loser == 2)first_turn=2;
 
-                    if (first_turn){//Case CLIENT_1 first
+                    if (first_turn == 1){//Case CLIENT_1 first
                         if(!sendActionC1(new ServerPlay((byte) 0)) || !sendActionC2(new ServerPlay((byte) 1))) {END=true;break main_loop;}
-                    }else {//Case CLIENT_2 first
-                        if (!sendActionC1(new ServerPlay((byte) 1)) || !sendActionC2(new ServerPlay((byte) 0))) {
-                            END = true;
-                            break main_loop;
-                        }
-                    }
-                    current_turn=first_turn;
-                    if (!current_turn){
                         sessionState=CLIENT_1_PLAY;
-                    }else{
+                    }else {//Case CLIENT_2 first
+                        if (!sendActionC1(new ServerPlay((byte) 1)) || !sendActionC2(new ServerPlay((byte) 0))) {END = true;break main_loop;}
                         sessionState=CLIENT_2_PLAY;
                     }
-                    break main_loop;
+                    break;
                 }
                 case CLIENT_1_PLAY:{
                     player1game.reroll();
-                    if(!sendActionC1(new ServerDice(CLIENT_1_ID,player1game.getDiceValues()))) {END=true;break main_loop;}
-                    if(!sendActionC2(new ServerDice(CLIENT_2_ID,player1game.getDiceValues()))) {END=true;break main_loop;}
+                    if(!sendActionBoth(new ServerDice(CLIENT_1_ID,player1game.getDiceValues()))) {END=true;break main_loop;}
                     play_loop: while(player1game.newTurnAvailable()){
                         ca1 = receiveActionC1();
                         if(ca1 == null){END = true; break main_loop;}
                         if(ca1.command == ClientCommand.Pass){
-                            if(!sendActionC2(new ServerPass(CLIENT_2_ID))) {END=true;break main_loop;}//Notify CLIENT_2 of PASS
+                            if(!sendActionC2(new ServerPass(CLIENT_1_ID))) {END=true;break main_loop;}//Notify CLIENT_2 of PASS
                             break play_loop;
                         }else if(ca1.command == ClientCommand.Take){
                             byte[] take = ((ClientTake)ca1).diceIndexList;
-                            if(!sendActionC2(new ServerTake(CLIENT_2_ID,take))) {END=true;break main_loop;}//Notify CLIENT_2 of TAKE
+                            if(!sendActionC2(new ServerTake(CLIENT_1_ID,take))) {END=true;break main_loop;}//Notify CLIENT_2 of TAKE
+                            take = decreaseIndeces(take);
                             player1game.take(take);
                             player1game.reroll();
-                            if(!sendActionC1(new ServerDice(CLIENT_1_ID,player1game.getDiceValues()))) {END=true;break main_loop;}//We send DICE to both players
-                            if(!sendActionC2(new ServerDice(CLIENT_2_ID,player1game.getDiceValues()))) {END=true;break main_loop;}
+                            if(!sendActionBoth(new ServerDice(CLIENT_1_ID,player1game.getDiceValues()))) {END=true;break main_loop;}//We send DICE to both players
                         }else{
-                            sendErrorMessageC1("Expected PASS or TAKE command");
+                            sendErrorMessageBoth("Invalid response from certain client");
                             continue main_loop;
                         }
                     }
                     int points = player1game.getPoints();
-                    if(!sendActionC2(new ServerPoints(CLIENT_2_ID,points))){END=true;break main_loop;}//We send PNTS to both players
-                    if(!sendActionC1(new ServerPoints(CLIENT_1_ID,points))){END=true;break main_loop;}
-                    if(first_turn == current_turn){
+                    if(!sendActionBoth(new ServerPoints(CLIENT_1_ID,points))){END=true;break main_loop;}//We send PNTS to both players
+                    if(first_turn == CLIENT1_TURN){
                         sessionState = CLIENT_2_PLAY;
                     }else{
-                        if(player1game.getPoints() > player2game.getPoints()){//Wins player1
-                            player1game.addGems(lobby_money);
-                            if(!sendActionC1(new ServerWins((byte) 0))){END=true;break main_loop;}
-                            if(!sendActionC1(new ServerWins((byte) 0))){END=true;break main_loop;}
-                        }else if (player1game.getPoints() < player2game.getPoints()){//Wins player2
-                            player2game.addGems(lobby_money);
-                            if(!sendActionC1(new ServerWins((byte) 1))){END=true;break main_loop;}
-                            if(!sendActionC1(new ServerWins((byte) 1))){END=true;break main_loop;}
-                        }else{//Case of a tie
-                            if(!sendActionC1(new ServerWins((byte) 2))){END=true;break main_loop;}
-                            if(!sendActionC2(new ServerWins((byte) 2))){END=true;break main_loop;}
-                        }
-                        sessionState = LOBBY;
+                        sessionState = GAME_END;
+                        
                     }
                     break;
-                }case CLIENT_2_PLAY:{
+                }
+                case CLIENT_2_PLAY:{
                     player2game.reroll();
-                    if(!sendActionC2(new ServerDice(CLIENT_2_ID,player2game.getDiceValues()))) {END=true;break main_loop;}
-                    if(!sendActionC1(new ServerDice(CLIENT_1_ID,player2game.getDiceValues()))) {END=true;break main_loop;}
+                    if(!sendActionBoth(new ServerDice(CLIENT_2_ID,player2game.getDiceValues()))) {END=true;break main_loop;}
                     play_loop: while(player2game.newTurnAvailable()){
                         ca2 = receiveActionC2();
                         if(ca2 == null){END = true; break main_loop;}
                         if(ca2.command == ClientCommand.Pass){
-                            if(!sendActionC1(new ServerPass(CLIENT_1_ID))) {END=true;break main_loop;}//Notify CLIENT_1 of PASS
+                            if(!sendActionC1(new ServerPass(CLIENT_2_ID))) {END=true;break main_loop;}//Notify CLIENT_2 of PASS
                             break play_loop;
                         }else if(ca2.command == ClientCommand.Take){
                             byte[] take = ((ClientTake)ca2).diceIndexList;
-                            if(!sendActionC1(new ServerTake(CLIENT_1_ID,take))) {END=true;break main_loop;}//Notify CLIENT_1 of TAKE
+                            if(!sendActionC1(new ServerTake(CLIENT_2_ID,take))) {END=true;break main_loop;}//Notify CLIENT_2 of TAKE
+                            take = decreaseIndeces(take);
                             player2game.take(take);
                             player2game.reroll();
-                            if(!sendActionC2(new ServerDice(CLIENT_2_ID,player2game.getDiceValues()))) {END=true;break main_loop;}//We send DICE to both players
-                            if(!sendActionC1(new ServerDice(CLIENT_1_ID,player2game.getDiceValues()))) {END=true;break main_loop;}
+                            if(!sendActionBoth(new ServerDice(CLIENT_2_ID,player2game.getDiceValues()))) {END=true;break main_loop;}//We send DICE to both players
                         }else{
-                            sendErrorMessageC2("Expected PASS or TAKE command");
+                            sendErrorMessageBoth("Invalid response from certain client");
                             continue main_loop;
                         }
                     }
                     int points = player2game.getPoints();
-                    if(!sendActionC2(new ServerPoints(CLIENT_2_ID,points))){END=true;break main_loop;}//We send PNTS to both players
-                    if(!sendActionC1(new ServerPoints(CLIENT_1_ID,points))){END=true;break main_loop;}
-                    if(first_turn == current_turn){
+                    if(!sendActionBoth(new ServerPoints(CLIENT_2_ID,points))){END=true;break main_loop;}//We send PNTS to both players
+                    if(first_turn == CLIENT2_TURN){
                         sessionState = CLIENT_1_PLAY;
                     }else{
-                        if(player1game.getPoints() > player2game.getPoints()){//Wins player1
-                            player1game.addGems(lobby_money);
-                            if(!sendActionC1(new ServerWins((byte) 0))){END=true;break main_loop;}
-                            if(!sendActionC2(new ServerWins((byte) 1))){END=true;break main_loop;}
-                        }else if (player1game.getPoints() < player2game.getPoints()){//Wins player2
-                            player2game.addGems(lobby_money);
-                            if(!sendActionC1(new ServerWins((byte) 1))){END=true;break main_loop;}
-                            if(!sendActionC2(new ServerWins((byte) 0))){END=true;break main_loop;}
-                        }else{//Case of a tie
-                            if(!sendActionC1(new ServerWins((byte) 2))){END=true;break main_loop;}
-                            if(!sendActionC2(new ServerWins((byte) 2))){END=true;break main_loop;}
-                        }
-                        sessionState = LOBBY;
+                        sessionState = GAME_END;
                     }
                     break;
+                }
+                case GAME_END:{
+                    int winnerC1 = 2;
+                    int winnerC2 = 2;
+                    if(player1game.getPoints() > player2game.getPoints()){//Wins player1
+                        player1game.addGems(gameLoot);
+                        winnerC1 = 0;
+                        winnerC2 = 1;
+                    }else if (player1game.getPoints() < player2game.getPoints()){//Wins player2
+                        player2game.addGems(gameLoot);
+                        winnerC1 = 1;
+                        winnerC2 = 0;
+                    }
+                    if(!sendActionC1(new ServerWins((byte) winnerC1))){END=true;break main_loop;}
+                    if(!sendActionC2(new ServerWins((byte) winnerC2))){END=true;break main_loop;}
+                    sessionState = LOBBY;
                 }
             }
         }
     }
+    
+    private byte[] decreaseIndeces(byte[] idx){
+        byte[] result = idx.clone();
+        for(int i = 0; i < idx.length; i++){
+            result[i]--;
+        }
+        return result;
+    }
+    
+    private byte[] increaseIndeces(byte[] idx){
+        byte[] result = idx.clone();
+        for(int i = 0; i < idx.length; i++){
+            result[i]++;
+        }
+        return result;
+    }
+    
+    private void sendErrorMessageBoth(String msg){
+        sendErrorMessageC1(msg);
+        sendErrorMessageC2(msg);
+    }
+    
     private void sendErrorMessageC1(String msg){
         try{
             ci1.sendErrorMessage(new ProtocolErrorMessage(msg));
@@ -305,6 +308,12 @@ public class ServerEnginePvP implements Runnable {
             //sendErrorMessage(e.getMessage());
         }
         return null;
+    }
+    
+    private boolean sendActionBoth(ServerAction sa){
+        boolean r1 = sendActionC1(sa);
+        boolean r2 = sendActionC2(sa);
+        return r1 && r2;
     }
 
     private boolean sendActionC1(ServerAction sa){

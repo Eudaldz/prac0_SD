@@ -12,6 +12,8 @@ import java.net.Socket;
  */
 class Server{
     public static int MAX_CONNECTIONS = 50;
+    public static final int VS_SERVER = 1;
+    public static final int VS_PLAYER = 2;
     int mode;
     int port;
 
@@ -49,10 +51,10 @@ class Server{
         int mode = 0;
         switch(mode_string){
             case "1":
-                mode = ServerEngine.VS_PLAYER;
+                mode = Server.VS_PLAYER;
                 break;
             case "2":
-                mode = ServerEngine.VS_SERVER;
+                mode = Server.VS_SERVER;
                 break;
             default:
                 System.out.println("Invalid command format");
@@ -66,6 +68,14 @@ class Server{
      *
      */
     public void run(){
+        if(mode == VS_SERVER){
+            run1();
+        }else{
+            run2();
+        }
+    }
+    
+    private void run1(){
         System.out.println(port);
         try(ServerSocket serverSocket = new ServerSocket(port)){
             while(true){
@@ -73,7 +83,26 @@ class Server{
                 Socket socket = serverSocket.accept();
                 System.out.println("Accepted connection with: "+socket.getInetAddress());
                 try{
-                    createNewGame(socket);
+                    createNewGame1(socket);
+                }catch(Exception e){}
+            }
+
+        }catch (IOException ex) {
+            System.out.println("Server exception: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+    
+    private void run2(){
+        System.out.println(port);
+        try(ServerSocket serverSocket = new ServerSocket(port)){
+            while(true){
+                System.out.println("Server is listening on port " + port);
+                Socket socket1 = serverSocket.accept();
+                Socket socket2 = serverSocket.accept();
+                System.out.println("Accepted connection with: "+socket1.getInetAddress() + " "+socket2.getInetAddress());
+                try{
+                    createNewGame2(socket1, socket2);
                 }catch(Exception e){}
             }
 
@@ -98,11 +127,23 @@ class Server{
      * @param client
      * @throws Exception
      */
-    private void createNewGame(Socket client)throws Exception{
+    private void createNewGame1(Socket client)throws Exception{
         CommunicationInterface comms = initStream(client);
         if(comms != null){
             System.out.println("Connection stablished with: "+client.getInetAddress());
-            ServerEngine se =  new ServerEngine(comms, mode, client.getInetAddress().toString());
+            ServerEngine se =  new ServerEngine(comms, client.getInetAddress().toString());
+            se.run();
+            //Thread nt = new Thread(new ServerEngine(comms, mode, client.getInetAddress().toString()));
+            //nt.start();
+        }
+    }
+    
+    private void createNewGame2(Socket client1, Socket client2)throws Exception{
+        CommunicationInterface comms1 = initStream(client1);
+        CommunicationInterface comms2 = initStream(client2);
+        if(comms1 != null && comms2 !=  null){
+            System.out.println("Connection stablished with: "+client1.getInetAddress() + " " + client2.getInetAddress());
+            ServerEnginePvP se =  new ServerEnginePvP(comms1, comms2, client1.getInetAddress().toString(), client1.getInetAddress().toString());
             se.run();
             //Thread nt = new Thread(new ServerEngine(comms, mode, client.getInetAddress().toString()));
             //nt.start();

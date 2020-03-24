@@ -20,9 +20,6 @@ import java.util.logging.SimpleFormatter;
 
 public class ServerEngine implements Runnable {
     
-    public static final int VS_SERVER = 1;
-    public static final int VS_PLAYER = 2;
-
     private CommunicationInterface ci;
     private PlayerGame clientGame, serverGame;
     private ClientAction ca;
@@ -43,7 +40,7 @@ public class ServerEngine implements Runnable {
     private Logger logger;
     private FileHandler fh;
 
-    public ServerEngine(CommunicationInterface ci, int mode, String clientAddress){
+    public ServerEngine(CommunicationInterface ci, String clientAddress){
         this.ci = ci;
         this.clientGame = new PlayerGame();//CLIENT
         this.serverGame = new PlayerGame();//CLIENT OR SERVER
@@ -115,7 +112,6 @@ public class ServerEngine implements Runnable {
                         break main_loop;
                     }
                     else{
-
                         sendErrorMessage("Expected BETT or EXIT command");
                         continue main_loop;
                     }
