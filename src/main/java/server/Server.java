@@ -6,11 +6,19 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This class represents the Server. Establishes communication and runs the ServerEngine.
  */
 class Server{
+    public static Map<Integer, Integer> coinDatabase = Collections.synchronizedMap(new HashMap<Integer, Integer>());
+    public static Set<Integer> connectedPlayers = Collections.synchronizedSet(new HashSet<Integer>());
+    
     public static int MAX_CONNECTIONS = 50;
     public static final int VS_SERVER = 1;
     public static final int VS_PLAYER = 2;

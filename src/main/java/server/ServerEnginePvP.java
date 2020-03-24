@@ -29,10 +29,8 @@ public class ServerEnginePvP implements Runnable {
     private Socket socket1;
     private Socket socket2;
 
-    private final static int CLIENT_1 = 0;
-    private final static int CLIENT_2 = 1;
-    private int CLIENT_1_ID=CLIENT_1;
-    private int CLIENT_2_ID=CLIENT_2;
+    private int CLIENT_1_ID=-1;
+    private int CLIENT_2_ID=-1;
 
     private final static int START = 0;
     private final static int LOBBY = 1;
@@ -43,6 +41,8 @@ public class ServerEnginePvP implements Runnable {
     
     private final static int CLIENT1_TURN = 1;
     private final static int CLIENT2_TURN = 2;
+    
+    private int SERVER_ID = 0;
 
     private FileWriter logger;
 
@@ -80,6 +80,12 @@ public class ServerEnginePvP implements Runnable {
             ci1.close();
             ci2.close();
             logger.close();
+            if(CLIENT_1_ID != -1){
+                Server.connectedPlayers.remove(CLIENT_1_ID);
+            }
+            if(CLIENT_2_ID != -1){
+                Server.connectedPlayers.remove(CLIENT_2_ID);
+            }
         }catch(IOException e){}
     }
 
@@ -103,9 +109,29 @@ public class ServerEnginePvP implements Runnable {
                         CLIENT_1_ID=((ClientStart)ca1).id;
                         CLIENT_2_ID=((ClientStart)ca2).id;
                         if(CLIENT_1_ID == CLIENT_2_ID){
-                            sendErrorMessageBoth("ID already taken");
+                            sendErrorMessageBoth("ID taken by certain client already in use");
                             continue main_loop;
                         }
+                        if(Server.connectedPlayers.contains(CLIENT_1_ID) || Server.connectedPlayers.contains(CLIENT_2_ID)){
+                            sendErrorMessageBoth("ID taken by a certain client already in use");
+                            continue main_loop;
+                        }
+                        
+                        Server.connectedPlayers.add(CLIENT_1_ID);
+                        Server.connectedPlayers.add(CLIENT_2_ID);
+                        
+                        if(Server.coinDatabase.containsKey(CLIENT_1_ID)){
+                            player1game.setGems(Server.coinDatabase.get(CLIENT_1_ID));
+                        }else{
+                            Server.coinDatabase.put(CLIENT_1_ID, player1game.getGems());
+                        }
+                        
+                        if(Server.coinDatabase.containsKey(CLIENT_2_ID)){
+                            player2game.setGems(Server.coinDatabase.get(CLIENT_2_ID));
+                        }else{
+                            Server.coinDatabase.put(CLIENT_2_ID, player2game.getGems());
+                        }
+                        
                         if (!sendActionC1(new ServerCash(player1game.getGems()))) {END = true;break main_loop;}
                         if (!sendActionC2(new ServerCash(player2game.getGems()))) {END = true;break main_loop;}
                         sessionState = LOBBY;
@@ -136,6 +162,8 @@ public class ServerEnginePvP implements Runnable {
                             gameLoot += 2;
                             player1game.addGems(-1);
                             player2game.addGems(-1);
+                            Server.coinDatabase.put(CLIENT_1_ID, player1game.getGems());
+                            Server.coinDatabase.put(CLIENT_2_ID, player2game.getGems());
                             sessionState = PLAY;
                             if( !sendActionBoth(new ServerLoot(gameLoot))){
                                 END = true;
@@ -254,12 +282,14 @@ public class ServerEnginePvP implements Runnable {
                     last_loser = 0;
                     if(player1game.getPoints() > player2game.getPoints()){//Wins player1
                         player1game.addGems(gameLoot);
+                        Server.coinDatabase.put(CLIENT_1_ID, player1game.getGems());
                         winnerC1 = 0;
                         winnerC2 = 1;
                         last_loser = 2;
                         gameLoot = 0;
                     }else if (player1game.getPoints() < player2game.getPoints()){//Wins player2
                         player2game.addGems(gameLoot);
+                        Server.coinDatabase.put(CLIENT_2_ID, player2game.getGems());
                         winnerC1 = 1;
                         winnerC2 = 0;
                         last_loser = 1;

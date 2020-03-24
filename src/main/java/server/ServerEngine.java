@@ -37,6 +37,8 @@ public class ServerEngine implements Runnable {
     private final static int CLIENT_PLAY = 3;
     private final static int SERVER_PLAY = 4;
     private final static int GAME_END = 5;
+    private int CLIENT_ID = -1;
+    private int SERVER_ID = 0;
 
     private final static boolean SERVER_TURN = true;
     private final static boolean CLIENT_TURN = false;
@@ -63,6 +65,7 @@ public class ServerEngine implements Runnable {
             System.out.println("Game ended with "+clientAddress);
             close_comms();
             System.out.println("Connecion ended with "+clientAddress);
+            
         }catch(Exception e){
             e.printStackTrace();
             System.out.println("Game aborted with "+clientAddress);
@@ -74,13 +77,15 @@ public class ServerEngine implements Runnable {
         try{
             ci.close();
             logger.close();
+            if(CLIENT_ID != -1){
+                Server.connectedPlayers.remove(CLIENT_ID);
+            }
         }catch(IOException e){}
     }
  
     private void run_game() {
         boolean END = false;
         int sessionState = START;
-        int SERVER_ID = 0,CLIENT_ID=0;
         String error_msg;
         boolean first_turn=false;
         int last_loser = 0; //0 -> tie | 1 ->client | 2 ->server
@@ -91,11 +96,28 @@ public class ServerEngine implements Runnable {
                 case START:{
                     ca = receiveAction();
                     if (ca == null){END = true; break main_loop;}
+                    if(ca.command == ClientCommand.Exit){
+                        END = true;
+                        break main_loop;
+                    }
                     if (ca.command != ClientCommand.Start) {
                         sendErrorMessage("Expected STRT command");
                         continue main_loop;
                     }
                     CLIENT_ID = ((ClientStart)ca).id;
+                    if(Server.connectedPlayers.contains(CLIENT_ID)){
+                        sendErrorMessage("ID is being used by another player");
+                        continue main_loop;
+                    }
+                    
+                    Server.connectedPlayers.add(CLIENT_ID);
+                    
+                    if(Server.coinDatabase.containsKey(CLIENT_ID)){
+                        clientGame.setGems(Server.coinDatabase.get(CLIENT_ID));
+                    }else{
+                        Server.coinDatabase.put(CLIENT_ID, clientGame.getGems());
+                    }
+                    
                     if(CLIENT_ID == 0)SERVER_ID = 1;
                     
                     if (!sendAction(new ServerCash(clientGame.getGems()))) {
@@ -117,6 +139,7 @@ public class ServerEngine implements Runnable {
                         }
                         gameLoot += 2;
                         clientGame.addGems(-1);
+                        Server.coinDatabase.put(CLIENT_ID, clientGame.getGems());
                         if (!sendAction(new ServerLoot(gameLoot))) {
                             END = true;
                             break main_loop;
@@ -210,6 +233,7 @@ public class ServerEngine implements Runnable {
                     if(clientGame.getPoints()>serverGame.getPoints()){
                         winner=0;
                         clientGame.addGems(gameLoot);
+                        Server.coinDatabase.put(CLIENT_ID, clientGame.getGems());
                         gameLoot = 0;
                     }
                     else if (clientGame.getPoints()<serverGame.getPoints()){
