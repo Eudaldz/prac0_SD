@@ -220,6 +220,7 @@ public class ServerEnginePvP implements Runnable {
                 case GAME_END:{
                     int winnerC1 = 2;
                     int winnerC2 = 2;
+                    last_loser = 0;
                     if(player1game.getPoints() > player2game.getPoints()){//Wins player1
                         player1game.addGems(gameLoot);
                         winnerC1 = 0;

@@ -61,6 +61,8 @@ public class ClientEngine{
         
         boolean END = false;
         
+        int gems = 0;
+        
         
         main_loop: while(!END){
             switch(sessionState){
@@ -72,13 +74,24 @@ public class ClientEngine{
                     if(sa == null){END = true; break main_loop;}
                     if(sa == errorSignal){continue main_loop;}
                     if(sa.command != ServerCommand.Cash){sendErrorMessage("Expected CASH command."); END = true; break main_loop;}
+                    gems = ((ServerCash)sa).cash;
                     ui.showServerAction(sa, UserState.START);
                     sessionState = LOBBY;
                     break;
                 }
                     
                 case LOBBY:{
-                    ClientAction ca = ui.queryUserAction(UserState.LOBBY);
+                    ClientAction ca = null;
+                    boolean repeat = false;
+                    do{
+                        repeat = false;
+                        ca = ui.queryUserAction(UserState.LOBBY);
+                        if(ca.command == ClientCommand.Bett && gems <= 0){
+                            ui.showInputError("Not enough gems to bett");
+                            repeat = true;
+                        }
+                    }while(repeat);
+                    
                     if(!sendAction(ca) || ca.command == ClientCommand.Exit){END = true; break main_loop;}
                     ServerAction sa = recieveAction();
                     if(sa == null){END = true; break main_loop;}
@@ -220,6 +233,7 @@ public class ClientEngine{
                     if(sa == null){END = true; break;}
                     if(sa == errorSignal){continue main_loop;}
                     if(sa.command != ServerCommand.Cash){sendErrorMessage("Expected CASH command."); END = true; break;}
+                    gems = ((ServerCash)sa).cash;
                     ui.showServerAction(sa, UserState.INGAME);
                     
                     sessionState = LOBBY;
