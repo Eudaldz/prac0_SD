@@ -288,7 +288,7 @@ public class ServerEngine implements Runnable {
 
     private boolean loggerConfig(){
         try{
-            logger = new FileWriter(Thread.currentThread().getName()+".log", false);
+            logger = new FileWriter("Server"+Thread.currentThread().getName()+".log", false);
         }catch(IOException e){
             e.printStackTrace();
             return false;
